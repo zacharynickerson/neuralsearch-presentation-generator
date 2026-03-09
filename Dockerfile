@@ -10,5 +10,5 @@ COPY . .
 
 EXPOSE 8080
 ENV PORT=8080
-# Railway injects PORT at runtime
-CMD gunicorn app:app --bind 0.0.0.0:${PORT} --workers 1 --timeout 600
+# Use shell form so $PORT expands; Railway injects PORT at runtime
+CMD ["sh", "-c", "exec gunicorn app:app --bind 0.0.0.0:${PORT} --workers 1 --timeout 600"]
