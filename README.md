@@ -76,7 +76,9 @@ The presentation uses `BFLStore_NeuralSearch_Slides.html` as the base template (
 
 4. **Generate a public URL** in Railway → Settings → Networking → Generate Domain.
 
-5. **Optional**: Set `SECRET_KEY` in Railway Variables for production.
+5. **If "Application failed to respond"**: In Railway → your service → Settings → Networking, ensure the domain's **target port** is `8080` (or matches `$PORT`).
+
+6. **Optional**: Set `SECRET_KEY` in Railway Variables for production.
 
 The app is self-contained: the template `BFLStore_NeuralSearch_Slides.html` is bundled in `neuralsearch_generator/` for deployment.
 

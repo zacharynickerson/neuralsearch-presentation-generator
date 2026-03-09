@@ -8,7 +8,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+# Verify app loads (fails build if import error)
+RUN python -c "from app import app; print('App OK')"
+
+RUN mkdir -p generated
+
 EXPOSE 8080
 ENV PORT=8080
-# Use shell form so $PORT expands; Railway injects PORT at runtime
-CMD ["sh", "-c", "exec gunicorn app:app --bind 0.0.0.0:${PORT} --workers 1 --timeout 600"]
+CMD ["sh", "start.sh"]

@@ -110,6 +110,11 @@ INDEX_HTML = """
 """
 
 
+@app.route("/health")
+def health():
+    return "ok", 200
+
+
 @app.route("/")
 def index():
     return render_template_string(INDEX_HTML, error=request.args.get("error"))
