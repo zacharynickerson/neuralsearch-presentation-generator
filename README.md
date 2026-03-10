@@ -76,7 +76,9 @@ The presentation uses `BFLStore_NeuralSearch_Slides.html` as the base template (
 
 4. **Generate a public URL** in Railway → Settings → Networking → Generate Domain.
 
-5. **If "Application failed to respond"**: In Railway → your service → Settings → Networking, ensure the domain's **target port** is `8080` (or matches `$PORT`).
+5. **If "Application failed to respond"** or **"'${PORT}' is not a valid port number"**:
+   - In Railway → your service → **Settings** → **Deploy** → clear any **Custom Start Command** (leave blank so the Dockerfile CMD is used)
+   - In **Networking**, ensure the domain's **target port** is `8080`
 
 6. **Optional**: Set `SECRET_KEY` in Railway Variables for production.
 
