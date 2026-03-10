@@ -63,26 +63,20 @@ Generation takes 2–5 minutes (fetches 10K queries, evaluates ~40 queries with/
 
 The presentation uses `BFLStore_NeuralSearch_Slides.html` as the base template (bundled in `neuralsearch_generator/` for deployment, or from the project root for local dev). Customer-specific data (metrics, tables, top queries) is injected dynamically.
 
+## Deploy to Render (recommended)
+
+1. Go to [render.com](https://render.com) → New → Web Service
+2. Connect your GitHub repo `neuralsearch-presentation-generator`
+3. Render auto-detects the Dockerfile — click **Create Web Service**
+4. Build takes ~10 min (Chromium install). Free tier works.
+5. Get your URL from the dashboard.
+
 ## Deploy to Railway
 
-1. **Create a Railway project** at [railway.app](https://railway.app) and connect your GitHub repo.
-
-2. **Set the Root Directory** in Railway project settings to `neuralsearch_generator` (so the Procfile and app are at the deploy root).
-
-3. **Deploy** — Railway will:
-   - Install Python dependencies
-   - Run `playwright install --with-deps chromium` for PDF export
-   - Start the app with gunicorn
-
-4. **Generate a public URL** in Railway → Settings → Networking → Generate Domain.
-
-5. **If "Application failed to respond"** or **"'${PORT}' is not a valid port number"**:
-   - In Railway → your service → **Settings** → **Deploy** → clear any **Custom Start Command** (leave blank so the Dockerfile CMD is used)
-   - In **Networking**, ensure the domain's **target port** is `8080`
-
-6. **Optional**: Set `SECRET_KEY` in Railway Variables for production.
-
-The app is self-contained: the template `BFLStore_NeuralSearch_Slides.html` is bundled in `neuralsearch_generator/` for deployment.
+1. Create a project at [railway.app](https://railway.app) and connect the repo.
+2. **Critical**: Service → Settings → Deploy → **clear Custom Start Command** (leave blank).
+3. Settings → Networking → Generate Domain. Set target port **8080**.
+4. Redeploy.
 
 ## Hosting (generic)
 
