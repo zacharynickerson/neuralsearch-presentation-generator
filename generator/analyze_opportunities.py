@@ -78,6 +78,7 @@ def analyze_opportunities(analytics_data: dict) -> Dict[str, Any]:
     median_cr = crs_sorted[len(crs_sorted) // 2] if crs_sorted else 0
 
     zero_low_result = []
+    no_results = []  # nbHits == 0 — typos, synonyms, alternative phrasing
     semantic = []
     low_engagement = []
     long_tail = []
@@ -106,6 +107,8 @@ def analyze_opportunities(analytics_data: dict) -> Dict[str, Any]:
 
         if hits <= 10:
             zero_low_result.append(entry)
+        if hits == 0:
+            no_results.append(entry)
         if is_semantic_query(query):
             semantic.append(entry)
         if count >= 500 and (ctr < median_ctr or cr < median_cr):
@@ -120,6 +123,7 @@ def analyze_opportunities(analytics_data: dict) -> Dict[str, Any]:
 
     low_engagement.sort(key=opportunity_score, reverse=True)
     zero_low_result.sort(key=lambda x: x["count"], reverse=True)
+    no_results.sort(key=lambda x: x["count"], reverse=True)
     semantic.sort(key=lambda x: x["count"], reverse=True)
     revenue_opportunity.sort(key=lambda x: x["count"], reverse=True)
 
@@ -135,6 +139,7 @@ def analyze_opportunities(analytics_data: dict) -> Dict[str, Any]:
             "total_queries": len(searches),
             "filtered_queries": n_filtered,
             "zero_low_result_count": len(zero_low_result),
+            "no_results_count": len(no_results),
             "semantic_count": len(semantic),
             "low_engagement_count": len(low_engagement),
             "long_tail_count": len(long_tail),
@@ -147,6 +152,7 @@ def analyze_opportunities(analytics_data: dict) -> Dict[str, Any]:
             },
         },
         "zero_low_result": zero_low_result[:200],
+        "no_results": no_results[:50],
         "semantic": semantic[:200],
         "low_engagement": low_engagement[:200],
         "long_tail_sample": long_tail[:100],

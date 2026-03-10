@@ -15,8 +15,7 @@ The only writes are **local files** on the server: generated HTML and PDF in the
 
 ## Requirements
 
-- **Search API key** — For running queries with/without NeuralSearch (evaluation). Use a search-only key, not the Admin key.
-- **Analytics API key** — For fetching top 10K queries. Requires Admin key or a key with `analytics` permission.
+- **Admin API key** — One key covers everything: query evaluation (search) and fetching top 10K queries (analytics).
 
 ## Setup
 
@@ -48,10 +47,9 @@ Open http://localhost:5001 (or set `PORT` env var to use a different port)
 
 1. Enter **Customer name** (e.g. "BFL Store")
 2. Enter **Algolia App ID**, **Index name**
-3. Enter **Search API key** (for query evaluation)
-4. Enter **Analytics API key** (for top queries)
-5. Select **Region** (US or EU)
-6. Click **Generate Presentation**
+3. Enter **Admin API key** (covers search + analytics)
+4. Select **Region** (US or EU — use EU if your app is in the EU region)
+5. Click **Generate Presentation**
 
 Generation takes 2–5 minutes (fetches 10K queries, evaluates ~40 queries with/without NeuralSearch).
 
@@ -61,7 +59,7 @@ Generation takes 2–5 minutes (fetches 10K queries, evaluates ~40 queries with/
 
 ## Template
 
-The presentation uses `BFLStore_NeuralSearch_Slides.html` as the base template (bundled in `neuralsearch_generator/` for deployment, or from the project root for local dev). Customer-specific data (metrics, tables, top queries) is injected dynamically.
+The presentation uses `BFLStore_NeuralSearch_Slides_STATIC_ONLY.html` as the base template — the same 20-slide BFL deck structure with 5 opportunities (Thin results, No results, Natural language, Conceptual, Relevancy), revenue impact, and case studies. Customer-specific data (metrics, tables, top queries) is injected dynamically.
 
 ## Deploy to Railway
 

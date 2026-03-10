@@ -17,6 +17,7 @@ def build_demo_queries(opportunities: dict) -> Dict[str, list]:
     def _valid(q):
         return q and not is_numeric_url_or_id(q)
     thin = [e["query"] for e in opportunities.get("zero_low_result", [])[:20] if e.get("nbHits", 0) <= 10 and _valid(e.get("query", ""))][:15]
+    no_results = [e["query"] for e in opportunities.get("no_results", [])[:15] if _valid(e.get("query", ""))][:12]
     semantic = [e["query"] for e in opportunities.get("semantic", [])[:20] if _valid(e.get("query", ""))][:15]
     conceptual = [e["query"] for e in opportunities.get("zero_low_result", []) if _valid(e.get("query", "")) and ("for " in e.get("query", "") or " " in e.get("query", ""))][:12]
     relevancy = [e["query"] for e in opportunities.get("semantic", []) if _valid(e.get("query", "")) and e.get("count", 0) >= 1000][:12]
@@ -24,6 +25,8 @@ def build_demo_queries(opportunities: dict) -> Dict[str, list]:
     # Fallback: use curated lists if not enough from opportunities
     if len(thin) < 5:
         thin = ["lipstick", "bath robe", "thermal leggings", "diaper bag", "waterproof shoes"] + thin
+    if len(no_results) < 3:
+        no_results = ["addidas", "cologne for men", "makeup", "mens perfume", "nike runing shoes", "womens watches"] + no_results
     if len(semantic) < 5:
         semantic = ["watches for women", "formal shoes for men", "wallet for men", "perfumes for women"] + semantic
     if len(conceptual) < 5:
@@ -33,6 +36,7 @@ def build_demo_queries(opportunities: dict) -> Dict[str, list]:
 
     return {
         "thin_results": thin[:12],
+        "no_results": no_results[:12],
         "natural_language": semantic[:12],
         "conceptual": conceptual[:12],
         "relevancy": relevancy[:12],
@@ -70,6 +74,7 @@ def run_pipeline(
     demo_queries = build_demo_queries(opportunities)
     all_queries = list(set(
         demo_queries["thin_results"] +
+        demo_queries["no_results"] +
         demo_queries["natural_language"] +
         demo_queries["conceptual"] +
         demo_queries["relevancy"]
@@ -92,6 +97,7 @@ def run_pipeline(
 
     # 6. Build opportunity summaries for slides
     thin_results = [eval_by_query.get(q, {"query": q, "without_neural": 0, "with_neural": 0, "count": 0}) for q in demo_queries["thin_results"] if q in eval_by_query]
+    no_results = [eval_by_query.get(q, {"query": q, "without_neural": 0, "with_neural": 0, "count": 0}) for q in demo_queries["no_results"] if q in eval_by_query]
     natural_language = [eval_by_query.get(q, {"query": q, "without_neural": 0, "with_neural": 0, "count": 0}) for q in demo_queries["natural_language"] if q in eval_by_query]
     conceptual = [eval_by_query.get(q, {"query": q, "without_neural": 0, "with_neural": 0, "count": 0}) for q in demo_queries["conceptual"] if q in eval_by_query]
     relevancy = [eval_by_query.get(q, {"query": q, "without_neural": 0, "with_neural": 0, "count": 0, "ctr": 0, "cr": 0}) for q in demo_queries["relevancy"] if q in eval_by_query]
@@ -123,6 +129,7 @@ def run_pipeline(
         "intro_chips": intro_chips,
         "long_tail_sample": long_tail_sample or ["shoes for men", "jacket for men", "watches for women"][:12],
         "thin_results": thin_results,
+        "no_results": no_results,
         "natural_language": natural_language,
         "conceptual": conceptual,
         "relevancy": relevancy,

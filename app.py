@@ -42,67 +42,155 @@ INDEX_HTML = """
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>NeuralSearch Presentation Generator</title>
   <style>
-    * { box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 40px; background: #f5f5f7; }
-    .container { max-width: 640px; margin: 0 auto; background: white; padding: 40px; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
-    h1 { color: #1a1a2e; margin-bottom: 8px; font-size: 24pt; }
-    .subtitle { color: #5c5c7a; margin-bottom: 32px; font-size: 14pt; }
-    label { display: block; font-weight: 600; color: #1a1a2e; margin-bottom: 6px; font-size: 12pt; }
-    input, select { width: 100%; padding: 12px 16px; border: 1px solid #ddd; border-radius: 8px; font-size: 14pt; margin-bottom: 20px; }
-    input:focus { outline: none; border-color: #5468FF; }
-    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    button { background: #5468FF; color: white; border: none; padding: 14px 28px; font-size: 15pt; font-weight: 600; border-radius: 8px; cursor: pointer; width: 100%; }
-    button:hover { background: #4358e0; }
-    button:disabled { background: #ccc; cursor: not-allowed; }
-    .error { background: #fee; color: #c00; padding: 12px; border-radius: 8px; margin-bottom: 20px; }
-    .note { font-size: 11pt; color: #5c5c7a; margin-top: -12px; margin-bottom: 20px; }
-    .required::after { content: " *"; color: #c00; }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f5fa;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      -webkit-font-smoothing: antialiased;
+    }
+    .card {
+      width: 100%;
+      max-width: 560px;
+      background: #ffffff;
+      border: 1px solid #d6d6e7;
+      border-radius: 8px;
+      box-shadow: 0 1px 4px rgba(35,38,59,0.06);
+      overflow: hidden;
+    }
+    .card-header {
+      padding: 24px 32px 20px;
+      border-bottom: 1px solid #d6d6e7;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .card-header svg { height: 22px; width: auto; flex-shrink: 0; }
+    .card-header-text h1 { font-size: 16px; font-weight: 700; color: #23263b; margin-bottom: 2px; }
+    .card-header-text p { font-size: 13px; color: #5a5e9a; }
+    .card-body { padding: 24px 32px 28px; }
+    .notice {
+      font-size: 12px;
+      color: #003dff;
+      margin-bottom: 20px;
+      padding: 10px 14px;
+      background: #f2f4ff;
+      border: 1px solid #bbd1ff;
+      border-radius: 6px;
+    }
+    label {
+      display: block;
+      font-weight: 600;
+      font-size: 12px;
+      color: #23263b;
+      margin-bottom: 5px;
+      letter-spacing: 0.01em;
+    }
+    input, select {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid #d6d6e7;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: inherit;
+      color: #23263b;
+      background: #ffffff;
+      margin-bottom: 16px;
+      transition: border-color 0.15s;
+    }
+    input:focus, select:focus { outline: none; border-color: #003dff; box-shadow: 0 0 0 3px #f2f4ff; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
+    button {
+      background: #003dff;
+      color: #ffffff;
+      border: none;
+      padding: 11px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      border-radius: 6px;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 4px;
+      transition: background 0.15s;
+    }
+    button:hover { background: #022eb9; }
+    button:disabled { background: #9698c3; cursor: not-allowed; }
+    .error {
+      background: #ffe6e9;
+      color: #d4142a;
+      border: 1px solid #fc95a1;
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      margin-bottom: 16px;
+    }
+    .note { font-size: 11px; color: #777aaf; margin-top: -10px; margin-bottom: 16px; }
+    .required::after { content: " *"; color: #d4142a; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>NeuralSearch Presentation Generator</h1>
-    <p class="subtitle">Enter customer details and Algolia credentials to generate a custom NeuralSearch sales deck.</p>
-    <p style="font-size: 12pt; color: #5468FF; margin-bottom: 24px; padding: 12px 16px; background: rgba(84,104,255,0.08); border-radius: 8px;"><strong>Read-only:</strong> All Algolia API calls are read-only. No index, analytics, or customer data is modified.</p>
+  <div class="card">
+    <div class="card-header">
+      <svg viewBox="-2 -2 108 108" xmlns="http://www.w3.org/2000/svg" aria-label="Algolia">
+        <path d="M16.8-1.001h88.4c8.7 0 15.8 7.065 15.8 15.8v88.405c0 8.7-7.065 15.795-15.8 15.795H16.8c-8.7 0-15.8-7.06-15.8-15.795V14.759c0-8.695 7.06-15.76 15.8-15.76z" fill="#003dff"/>
+        <path d="M73.505 25.788v-4.115a5.209 5.209 0 0 0-5.21-5.205H56.15a5.209 5.209 0 0 0-5.21 5.205v4.225c0 .47.435.8.91.69a37.966 37.966 0 0 1 10.57-1.49c3.465 0 6.895.47 10.21 1.38.44.11.875-.215.875-.69M40.22 31.173l-2.075-2.075a5.206 5.206 0 0 0-7.365 0l-2.48 2.475a5.185 5.185 0 0 0 0 7.355l2.04 2.04c.33.325.805.25 1.095-.075a39.876 39.876 0 0 1 3.975-4.66 37.68 37.68 0 0 1 4.7-4c.364-.22.4-.73.11-1.06m22.164 13.065v17.8c0 .51.55.875 1.02.62l15.825-8.19c.36-.18.47-.62.29-.98-3.28-5.755-9.37-9.685-16.405-9.94-.365 0-.73.29-.73.69m0 42.88c-13.195 0-23.915-10.705-23.915-23.88 0-13.175 10.72-23.875 23.915-23.875 13.2 0 23.916 10.7 23.916 23.875s-10.68 23.88-23.916 23.88m0-57.8c-18.74 0-33.94 15.18-33.94 33.92 0 18.745 15.2 33.89 33.94 33.89s33.94-15.18 33.94-33.925c0-18.745-15.165-33.885-33.94-33.885z" fill="#FFF"/>
+      </svg>
+      <div class="card-header-text">
+        <h1>NeuralSearch Presentation Generator</h1>
+        <p>Enter customer details and Algolia credentials to generate a custom sales deck.</p>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="notice"><strong>Read-only:</strong> All Algolia API calls are read-only. No index, analytics, or customer data is modified.</div>
 
-    {% if error %}
-    <div class="error">{{ error }}</div>
-    {% endif %}
+      {% if error %}
+      <div class="error">{{ error }}</div>
+      {% endif %}
 
-    <form method="POST" action="/generate">
-      <label class="required">Customer name</label>
-      <input type="text" name="customer_name" placeholder="e.g. BFL Store" required value="{{ request.form.get('customer_name', '') }}">
+      <form method="POST" action="/generate">
+        <label class="required">Customer name</label>
+        <input type="text" name="customer_name" placeholder="e.g. BFL Store" required value="{{ request.form.get('customer_name', '') }}">
 
-      <label class="required">Algolia App ID</label>
-      <input type="text" name="app_id" placeholder="e.g. 2MMV84221Y" required value="{{ request.form.get('app_id', '') }}">
+        <label class="required">Algolia App ID</label>
+        <input type="text" name="app_id" placeholder="e.g. 2MMV84221Y" required value="{{ request.form.get('app_id', '') }}">
 
-      <label class="required">Index name</label>
-      <input type="text" name="index_name" placeholder="e.g. p_bflstore_product_rfc" required value="{{ request.form.get('index_name', '') }}">
+        <label class="required">Index name</label>
+        <input type="text" name="index_name" placeholder="e.g. p_bflstore_product_rfc" required value="{{ request.form.get('index_name', '') }}">
 
-      <label class="required">Search API key</label>
-      <input type="password" name="search_api_key" placeholder="Search-only key for query evaluation" required>
-      <p class="note">Used to run searches with/without NeuralSearch. Not the Admin key.</p>
+        <label class="required">Admin API key</label>
+        <input type="password" name="admin_api_key" placeholder="Admin key (covers search + analytics)" required>
+        <p class="note">Used for both query evaluation and fetching top 10K queries. One key covers everything.</p>
 
-      <label class="required">Analytics API key</label>
-      <input type="password" name="analytics_api_key" placeholder="Admin key with analytics permission" required>
-      <p class="note">Used to fetch top 10K queries from Algolia Analytics. Requires Admin or Analytics API key.</p>
+        <div class="row">
+          <div>
+            <label>Region</label>
+            <select name="region">
+              <option value="US">US</option>
+              <option value="EU">EU</option>
+            </select>
+            <p class="note">Analytics endpoint — use EU if your app is in the EU region.</p>
+          </div>
+          <div>
+            <label>Days of analytics data</label>
+            <input type="number" name="days_back" value="90" min="30" max="365">
+          </div>
+        </div>
 
-      <label>Region</label>
-      <select name="region">
-        <option value="US">US</option>
-        <option value="EU">EU</option>
-      </select>
-
-      <label>Days of analytics data</label>
-      <input type="number" name="days_back" value="90" min="30" max="365">
-
-      <button type="submit" id="submitBtn">Generate Presentation</button>
-    </form>
+        <button type="submit" id="submitBtn">Generate Presentation</button>
+      </form>
+    </div>
   </div>
   <script>
     document.querySelector('form').addEventListener('submit', function() {
       document.getElementById('submitBtn').disabled = true;
-      document.getElementById('submitBtn').textContent = 'Generating... (this may take 2–5 minutes)';
+      document.getElementById('submitBtn').textContent = 'Generating… (this may take 2–5 minutes)';
     });
   </script>
 </body>
@@ -141,22 +229,55 @@ PROCESSING_HTML = """
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Generating… — NeuralSearch</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 40px; background: #f5f5f7; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-    .box { max-width: 480px; background: white; padding: 48px; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); text-align: center; }
-    .spinner { width: 48px; height: 48px; border: 4px solid #eee; border-top-color: #5468FF; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 24px; }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f5f5fa;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 40px 20px;
+      -webkit-font-smoothing: antialiased;
+    }
+    .box {
+      max-width: 440px;
+      width: 100%;
+      background: #ffffff;
+      border: 1px solid #d6d6e7;
+      border-radius: 8px;
+      box-shadow: 0 1px 4px rgba(35,38,59,0.06);
+      padding: 40px 36px;
+      text-align: center;
+    }
+    .spinner {
+      width: 40px; height: 40px;
+      border: 3px solid #d6d6e7;
+      border-top-color: #003dff;
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+      margin: 0 auto 24px;
+    }
     @keyframes spin { to { transform: rotate(360deg); } }
-    h2 { color: #1a1a2e; margin-bottom: 8px; }
-    p { color: #5c5c7a; }
-    .error { background: #fee; color: #c00; padding: 16px; border-radius: 8px; margin-top: 20px; }
-    a { color: #5468FF; }
+    h2 { font-size: 17px; font-weight: 700; color: #23263b; margin-bottom: 8px; }
+    p { font-size: 14px; color: #5a5e9a; line-height: 1.6; margin-bottom: 8px; }
+    .error {
+      background: #ffe6e9; color: #d4142a;
+      border: 1px solid #fc95a1;
+      padding: 12px 16px; border-radius: 6px;
+      font-size: 13px; margin-top: 20px; text-align: left;
+    }
+    a { color: #003dff; text-decoration: none; }
+    a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
   <div class="box">
     <div class="spinner"></div>
     <h2>Generating presentation…</h2>
-    <p>Fetching analytics, evaluating queries, and building your deck. This usually takes 2–5 minutes.</p>
-    <p style="font-size: 12pt; margin-top: 16px;">Please keep this tab open. You'll be redirected when it's ready.</p>
+    <p>Fetching analytics, evaluating queries, and building your deck.</p>
+    <p>This usually takes 2–5 minutes. Please keep this tab open.</p>
     <div id="error" class="error" style="display:none;"></div>
   </div>
   <script>
@@ -171,7 +292,7 @@ PROCESSING_HTML = """
             document.querySelector(".spinner").style.display = "none";
             document.getElementById("error").style.display = "block";
             document.getElementById("error").textContent = data.error || "An error occurred.";
-            document.getElementById("error").innerHTML += '<br><a href="/">← Try again</a>';
+            document.getElementById("error").innerHTML += '<br><br><a href="/">← Try again</a>';
           } else {
             setTimeout(poll, 3000);
           }
@@ -190,12 +311,11 @@ def generate():
     customer_name = request.form.get("customer_name", "").strip()
     app_id = request.form.get("app_id", "").strip()
     index_name = request.form.get("index_name", "").strip()
-    search_api_key = request.form.get("search_api_key", "").strip()
-    analytics_api_key = request.form.get("analytics_api_key", "").strip()
+    admin_api_key = request.form.get("admin_api_key", "").strip()
     region = request.form.get("region", "US")
     days_back = int(request.form.get("days_back", 90))
 
-    if not all([customer_name, app_id, index_name, search_api_key, analytics_api_key]):
+    if not all([customer_name, app_id, index_name, admin_api_key]):
         return redirect(url_for("index", error="All required fields must be filled."))
 
     job_id = str(uuid.uuid4())[:12]
@@ -207,8 +327,8 @@ def generate():
             "job_id": job_id,
             "app_id": app_id,
             "index_name": index_name,
-            "search_api_key": search_api_key,
-            "analytics_api_key": analytics_api_key,
+            "search_api_key": admin_api_key,
+            "analytics_api_key": admin_api_key,
             "customer_name": customer_name,
             "region": region,
             "days_back": days_back,
@@ -292,21 +412,50 @@ VIEW_HTML = """
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>View Presentation — NeuralSearch</title>
   <style>
-    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #1a1a2e; }
-    .toolbar { position: fixed; top: 0; left: 0; right: 0; padding: 12px 24px; background: rgba(0,0,0,0.8); display: flex; gap: 12px; align-items: center; z-index: 100; }
-    .toolbar a, .toolbar button { padding: 8px 16px; background: #5468FF; color: white; border: none; border-radius: 6px; text-decoration: none; font-size: 13pt; cursor: pointer; }
-    .toolbar a:hover, .toolbar button:hover { background: #4358e0; }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #23263b; -webkit-font-smoothing: antialiased; }
+    .toolbar {
+      position: fixed; top: 0; left: 0; right: 0;
+      height: 48px;
+      padding: 0 20px;
+      background: #23263b;
+      border-bottom: 1px solid #36395a;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      z-index: 100;
+    }
+    .toolbar a {
+      padding: 6px 14px;
+      background: #36395a;
+      color: #d6d6e7;
+      border: 1px solid #484c7a;
+      border-radius: 5px;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      transition: background 0.15s;
+    }
+    .toolbar a:hover { background: #484c7a; color: #ffffff; }
+    .toolbar a.primary {
+      background: #003dff;
+      color: #ffffff;
+      border-color: #003dff;
+    }
+    .toolbar a.primary:hover { background: #022eb9; border-color: #022eb9; }
     .toolbar .spacer { flex: 1; }
-    iframe { width: 100%; height: calc(100vh - 52px); margin-top: 52px; border: none; }
+    .toolbar .customer-label { font-size: 12px; color: #777aaf; font-weight: 500; }
+    iframe { width: 100%; height: calc(100vh - 48px); margin-top: 48px; border: none; }
   </style>
 </head>
 <body>
   <div class="toolbar">
-    <a href="/">← New presentation</a>
+    <a href="/">← New</a>
     <a href="/download/{{ pid }}">Download HTML</a>
-    <a href="/pdf/{{ pid }}">Download PDF</a>
+    <a href="/pdf/{{ pid }}" class="primary">Download PDF</a>
     <span class="spacer"></span>
-    <span style="color: #888;">{{ customer }}</span>
+    <span class="customer-label">{{ customer }}</span>
   </div>
   <iframe src="/embed/{{ pid }}" title="NeuralSearch Presentation"></iframe>
 </body>
