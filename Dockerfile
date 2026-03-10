@@ -1,5 +1,5 @@
 # Playwright image - Chromium pre-installed, faster builds
-FROM mcr.microsoft.com/playwright/python:v1.49.0-noble
+FROM mcr.microsoft.com/playwright/python:v1.58.0-noble
 
 WORKDIR /app
 
