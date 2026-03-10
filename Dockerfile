@@ -13,5 +13,5 @@ RUN mkdir -p generated
 
 EXPOSE 8080
 
-# Shell form - $PORT expands at runtime. Railway injects PORT.
-CMD gunicorn app:app --bind 0.0.0.0:${PORT:-8080} --workers 1 --timeout 600 --access-logfile - --error-logfile -
+# Python reads PORT from env - no shell expansion, works with Railway
+CMD ["python", "run.py"]
