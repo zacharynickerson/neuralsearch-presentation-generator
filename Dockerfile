@@ -1,4 +1,3 @@
-# Playwright image has Chromium pre-installed — no 15-min download during build
 FROM mcr.microsoft.com/playwright/python:v1.49.0-noble
 
 WORKDIR /app
@@ -8,12 +7,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# Verify app loads (fails build if import error)
 RUN python -c "from app import app; print('App OK')"
-
 RUN mkdir -p generated
+RUN chmod +x /app/entrypoint.sh
 
 EXPOSE 8080
-ENV PORT=8080
-# Hardcode 8080 - Railway uses this for web services; avoids $PORT expansion issues
-CMD ["gunicorn", "app:app", "--bind", "0.0.0.0:8080", "--workers", "1", "--timeout", "600", "--access-logfile", "-", "--error-logfile", "-"]
+
+ENTRYPOINT ["/app/entrypoint.sh"]
