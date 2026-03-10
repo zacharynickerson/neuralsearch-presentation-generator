@@ -63,20 +63,12 @@ Generation takes 2–5 minutes (fetches 10K queries, evaluates ~40 queries with/
 
 The presentation uses `BFLStore_NeuralSearch_Slides.html` as the base template (bundled in `neuralsearch_generator/` for deployment, or from the project root for local dev). Customer-specific data (metrics, tables, top queries) is injected dynamically.
 
-## Deploy to Render (recommended)
-
-1. Go to [render.com](https://render.com) → New → Web Service
-2. Connect your GitHub repo `neuralsearch-presentation-generator`
-3. Render auto-detects the Dockerfile — click **Create Web Service**
-4. Build takes ~10 min (Chromium install). Free tier works.
-5. Get your URL from the dashboard.
-
 ## Deploy to Railway
 
 1. Create a project at [railway.app](https://railway.app) and connect the repo.
-2. **Critical**: Service → Settings → Deploy → **clear Custom Start Command** (leave blank).
-3. Settings → Networking → Generate Domain. Set target port **8080**.
-4. Redeploy.
+2. **Settings → Deploy**: Clear any Custom Start Command (leave blank).
+3. **Settings → Networking**: Generate Domain.
+4. Deploy.
 
 ## Hosting (generic)
 

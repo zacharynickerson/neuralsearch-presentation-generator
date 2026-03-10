@@ -1,7 +1,0 @@
-# Deploy to Render.com - often more reliable than Railway for Python
-services:
-  - type: web
-    name: neuralsearch-generator
-    runtime: docker
-    dockerfilePath: ./Dockerfile
-    plan: free
