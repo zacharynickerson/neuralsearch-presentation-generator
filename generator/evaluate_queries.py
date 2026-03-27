@@ -79,21 +79,28 @@ def evaluate_queries(
     index_name: str,
     queries: List[str],
     analytics_lookup: Optional[Dict[str, dict]] = None,
+    compare_neural: bool = True,
 ) -> List[Dict[str, Any]]:
     """
     Evaluate each query with and without NeuralSearch.
     analytics_lookup: {query_lower: {count, ctr, cr}} for relevancy metrics.
+    When compare_neural is False, only keyword search runs (no NeuralSearch API calls).
     """
     results = []
     for q in queries:
         resp_without = search(app_id, search_api_key, index_name, q, with_neural=False)
         time.sleep(0.1)
-        resp_with = search(app_id, search_api_key, index_name, q, with_neural=True)
-        time.sleep(0.1)
+        if compare_neural:
+            resp_with = search(app_id, search_api_key, index_name, q, with_neural=True)
+            time.sleep(0.1)
+        else:
+            resp_with = {}
 
         hits_without = resp_without.get("nbHits", 0) if "error" not in resp_without else 0
-        hits_with = resp_with.get("nbHits", 0) if "error" not in resp_with else 0
-        hit_list_with = resp_with.get("hits", []) if "error" not in resp_with else []
+        hits_with = (
+            resp_with.get("nbHits", 0) if (compare_neural and "error" not in resp_with) else 0
+        )
+        hit_list_with = resp_with.get("hits", []) if (compare_neural and "error" not in resp_with) else []
         hit_list_without = resp_without.get("hits", []) if "error" not in resp_without else []
 
         entry = {
@@ -103,7 +110,7 @@ def evaluate_queries(
             "improvement": hits_with - hits_without,
             "top3": [get_hit_title(h) for h in hit_list_with[:3]],
             "top3_without": [get_hit_title(h) for h in hit_list_without[:3]],
-            "error": resp_without.get("error") or resp_with.get("error"),
+            "error": resp_without.get("error") or (resp_with.get("error") if compare_neural else None),
         }
         if analytics_lookup:
             a = analytics_lookup.get(q.lower().strip(), {})

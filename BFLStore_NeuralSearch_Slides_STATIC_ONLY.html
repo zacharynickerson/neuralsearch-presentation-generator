@@ -486,7 +486,7 @@
     <div class="logo">
       <span class="confidential">C O N F I D E N T I A L</span>
       <div class="logo-divider"></div>
-      <img src="logos/algolia-icon.png" alt="Algolia" class="logo-icon">
+      <img src="logos/algoila-large.svg" alt="Algolia" class="logo-icon">
       <div class="logo-divider"></div>
       <span class="powering">NeuralSearch</span>
     </div>
@@ -787,6 +787,7 @@
     <div style="display: flex; flex-direction: column; gap: 20px; margin: 20px 0;">
       <div style="padding: 24px 28px; background: linear-gradient(135deg, var(--xenon-600) 0%, var(--xenon-700) 100%); border-radius: 12px; color: white; text-align: center; box-shadow: 0 8px 24px rgba(0,61,255,0.25);">
         <p style="font-size: 12px; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.08em; color: white;">Projected monthly uplift (example: $80 AOV)</p>
+        <p style="font-size: 11px; margin: 0 0 12px; color: rgba(255,255,255,0.92); line-height: 1.45; text-align: left; max-width: 520px; margin-left: auto; margin-right: auto;"><!--REVENUE_FORMULA_LINES--></p>
         <p style="font-size: 48px; font-weight: 800; margin: 0; letter-spacing: -0.02em; line-height: 1; color: white;">$57,000</p>
         <p style="font-size: 14px; margin: 8px 0 0; color: white;">≈ $684K annually</p>
       </div>
@@ -799,7 +800,7 @@
         </div>
         <div style="padding: 18px 20px; background: var(--xenon-100); border-radius: 10px; border: 1px solid var(--xenon-200);">
           <p style="font-size: 11px; font-weight: 700; color: var(--xenon-700); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em;">Plug in your AOV</p>
-          <p style="font-size: 13px; margin: 0; font-family: monospace;">674K × 4.2% × 2.5% × AOV</p>
+          <p style="font-size: 13px; margin: 0; font-family: monospace;"><!--REVENUE_UPLIFT_EQUATION--></p>
           <p style="font-size: 12px; color: var(--grey-600); margin-top: 8px;">$50 AOV → $35K/mo · $100 AOV → $71K/mo</p>
         </div>
       </div>
@@ -975,7 +976,7 @@
        SLIDE 12 — Why NeuralSearch for BFL Store (executive summary)
   ══════════════════════════════════════════ -->
   <div class="slide" id="slide13" data-slide-num="13 of 20" style="display:none;">
-    <h1>Why NeuralSearch for BFL Store</h1>
+    <h1>Why NeuralSearch for <!--CUSTOMER_NAME_EXEC_SUMMARY--></h1>
     <p class="benefit">Summary for stakeholders.</p>
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0;">
       <div style="padding: 18px 20px; background: var(--grey-050); border-radius: 10px; border: 1px solid var(--grey-200);">
@@ -1099,33 +1100,10 @@
   ══════════════════════════════════════════ -->
   <div class="slide" id="slide17" data-slide-num="17 of 20" style="display:none;">
     <h1>Multi-lingual out of the box</h1>
-    <p class="benefit">NeuralSearch understands 50+ languages. No separate indices. Cross-lingual matching — Arabic queries find English catalog, and vice versa.</p>
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0;">
-      <div style="padding: 20px 24px; background: var(--grey-000); border-radius: 8px; border: 1px solid var(--grey-200); box-shadow: 0 1px 2px rgba(35,38,59,0.04);">
-        <p style="font-size: 11pt; color: var(--algolia-muted); margin-bottom: 12px;">English queries (your data)</p>
-        <div style="display: flex; flex-wrap: wrap; gap: 8px 10px;">
-          <span style="padding: 5px 10px; background: #f2f4ff; border: 1px solid #bbd1ff; border-radius: 4px; color: #23263b; font-size: 12px;">shoes for men</span>
-          <span style="padding: 5px 10px; background: #f2f4ff; border: 1px solid #bbd1ff; border-radius: 4px; color: #23263b; font-size: 12px;">jacket for men</span>
-          <span style="padding: 5px 10px; background: #f2f4ff; border: 1px solid #bbd1ff; border-radius: 4px; color: #23263b; font-size: 12px;">watches for women</span>
-          <span style="padding: 5px 10px; background: #f2f4ff; border: 1px solid #bbd1ff; border-radius: 4px; color: #23263b; font-size: 12px;">dress for women</span>
-          <span style="padding: 5px 10px; background: #f2f4ff; border: 1px solid #bbd1ff; border-radius: 4px; color: #23263b; font-size: 12px;">men's shoes</span>
-          <span style="padding: 5px 10px; background: #f2f4ff; border: 1px solid #bbd1ff; border-radius: 4px; color: #23263b; font-size: 12px;">men's watches</span>
-        </div>
-      </div>
-      <div style="padding: 20px 24px; background: var(--grey-000); border-radius: 8px; border: 1px solid var(--grey-200); box-shadow: 0 1px 2px rgba(35,38,59,0.04);">
-        <p style="font-size: 11pt; color: var(--algolia-muted); margin-bottom: 12px;">Arabic queries (same intent — your data)</p>
-        <div style="display: flex; flex-wrap: wrap; gap: 8px 10px;">
-          <span style="padding: 5px 10px; background: #f2f4ff; border: 1px solid #bbd1ff; border-radius: 4px; font-size: 12px;">جاکیت <span style="font-size: 10px; color: var(--grey-500);">(jacket) 19K</span></span>
-          <span style="padding: 5px 10px; background: #f2f4ff; border: 1px solid #bbd1ff; border-radius: 4px; font-size: 12px;">فستان <span style="font-size: 10px; color: var(--grey-500);">(dress) 10K</span></span>
-          <span style="padding: 5px 10px; background: #f2f4ff; border: 1px solid #bbd1ff; border-radius: 4px; font-size: 12px;">ملابس <span style="font-size: 10px; color: var(--grey-500);">(clothes) 7K</span></span>
-          <span style="padding: 5px 10px; background: #f2f4ff; border: 1px solid #bbd1ff; border-radius: 4px; font-size: 12px;">طقم <span style="font-size: 10px; color: var(--grey-500);">(set) 7K</span></span>
-          <span style="padding: 5px 10px; background: #f2f4ff; border: 1px solid #bbd1ff; border-radius: 4px; font-size: 12px;">شال <span style="font-size: 10px; color: var(--grey-500);">(scarf) 1.6K</span></span>
-          <span style="padding: 5px 10px; background: #f2f4ff; border: 1px solid #bbd1ff; border-radius: 4px; font-size: 12px;">احذیة رجالیة <span style="font-size: 10px; color: var(--grey-500);">(men's shoes)</span></span>
-        </div>
-      </div>
-    </div>
-    <p>Keyword search can't connect "فستان" to "dress" or "جاکیت" to "jacket" — different scripts, no exact match. NeuralSearch understands intent across languages. One index. No translation layers. Works out of the box.</p>
-    <div class="talk-track">NeuralSearch is multi-lingual out of the box. It understands 50+ languages with no configuration. Your shoppers search in both English and Arabic — جاکیت means jacket, فستان means dress, ملابس means clothes. Keyword search can't connect these to your English catalog. NeuralSearch does. Cross-lingual matching: one index, no separate language indices, no translation layers. It's a huge benefit for retailers in multilingual markets like the Gulf.</div>
+    <p class="benefit"><!--MULTILINGUAL_BENEFIT--></p>
+<!--MULTILINGUAL_GRID-->
+    <p><!--MULTILINGUAL_FOOTNOTE--></p>
+    <div class="talk-track"><!--MULTILINGUAL_TALK--></div>
   </div>
 
   <!-- ══════════════════════════════════════════

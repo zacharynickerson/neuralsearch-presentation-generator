@@ -183,6 +183,12 @@ INDEX_HTML = """
           </div>
         </div>
 
+        <label style="display: flex; align-items: flex-start; gap: 10px; font-weight: 500; cursor: pointer; margin-bottom: 8px;">
+          <input type="checkbox" name="customer_has_neural_access" checked style="width: auto; margin: 3px 0 0; flex-shrink: 0;">
+          <span style="font-size: 13px; color: #23263b; line-height: 1.45;">Customer has Neural Search access (preview)?</span>
+        </label>
+        <p class="note" style="margin-top: 0;">Uncheck if this account cannot run NeuralSearch — the deck will use keyword-only result counts from your analytics (no &ldquo;With NS&rdquo; columns or side-by-side comparisons).</p>
+
         <button type="submit" id="submitBtn">Generate Presentation</button>
       </form>
     </div>
@@ -314,6 +320,7 @@ def generate():
     admin_api_key = request.form.get("admin_api_key", "").strip()
     region = request.form.get("region", "US")
     days_back = int(request.form.get("days_back", 90))
+    include_neural_comparison = request.form.get("customer_has_neural_access") == "on"
 
     if not all([customer_name, app_id, index_name, admin_api_key]):
         return redirect(url_for("index", error="All required fields must be filled."))
@@ -332,6 +339,7 @@ def generate():
             "customer_name": customer_name,
             "region": region,
             "days_back": days_back,
+            "include_neural_comparison": include_neural_comparison,
         },
     )
     thread.daemon = True
