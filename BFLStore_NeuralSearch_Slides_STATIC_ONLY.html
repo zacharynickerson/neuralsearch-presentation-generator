@@ -119,6 +119,8 @@
       overflow-x: hidden;
       background: var(--grey-000);
       position: relative;
+      user-select: text;
+      -webkit-user-select: text;
     }
     .slide::after {
       content: attr(data-slide-num);
@@ -205,22 +207,69 @@
     .slide tr:hover td { background: var(--xenon-100); }
     .slide td { border-top: 1px solid var(--grey-200); color: var(--grey-800); }
 
-    /* ══ Navigation ══ */
-    .slide .nav {
+    /* ══ Deck navigation (buttons only — slides stay selectable / copyable) ══ */
+    .deck-controls {
       position: fixed;
       bottom: 20px;
       left: 50%;
       transform: translateX(-50%);
-      font-size: 12px;
-      color: var(--grey-500);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: calc(100vw - 32px);
+      font-size: 13px;
+      color: var(--grey-700);
       background: var(--grey-000);
       border: 1px solid var(--grey-200);
-      padding: 6px 16px;
-      border-radius: 20px;
-      white-space: nowrap;
-      box-shadow: 0 1px 4px rgba(35, 38, 59, 0.08);
+      padding: 8px 14px;
+      border-radius: 24px;
+      box-shadow: 0 2px 10px rgba(35, 38, 59, 0.12);
     }
-    .slide-num { font-weight: 600; color: var(--grey-700); }
+    .deck-nav-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 40px;
+      height: 36px;
+      padding: 0 12px;
+      font-size: 18px;
+      font-weight: 600;
+      line-height: 1;
+      color: var(--grey-900);
+      background: white;
+      border: 1px solid var(--grey-300);
+      border-radius: 8px;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .deck-nav-btn:hover:not(:disabled) {
+      background: var(--xenon-100);
+      border-color: var(--xenon-600);
+      color: var(--xenon-700);
+    }
+    .deck-nav-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+    .deck-controls .slide-num {
+      font-weight: 600;
+      color: var(--grey-800);
+      min-width: 4.5em;
+      text-align: center;
+    }
+    .deck-hint {
+      width: 100%;
+      text-align: center;
+      font-size: 11px;
+      color: var(--grey-500);
+      margin: 0;
+      flex-basis: 100%;
+    }
 
     .next-step { border-left: 3px solid var(--xenon-600); padding-left: 20px; margin-top: 24px; }
 
@@ -477,7 +526,7 @@
         padding-top: 104px;
       }
       .slide:last-of-type { page-break-after: auto; }
-      .nav { display: none !important; }
+      .deck-controls { display: none !important; }
     }
   </style>
 </head>
@@ -1181,20 +1230,52 @@
     <div class="talk-track">Specific ask: I'm sending a calendar invite for a 30-minute A/B test kickoff. We'll have you in Preview Mode by end of week. You'll see your before/after in your own dashboard. At the end of 30 days, we review the data together — CVR, revenue, no-results rate — and you decide. No commitment. The test is free. Overages during the test are waived.</div>
   </div>
 
-  <p class="nav"><span class="slide-num" id="slideNum">1 of 20</span> · ← → or click to advance · F11 fullscreen</p>
+  <div class="deck-controls" id="deckControls" role="toolbar" aria-label="Slide navigation">
+    <button type="button" class="deck-nav-btn" id="deckPrev" aria-label="Previous slide">←</button>
+    <span class="slide-num" id="slideNum">1 of 20</span>
+    <button type="button" class="deck-nav-btn" id="deckNext" aria-label="Next slide">→</button>
+    <p class="deck-hint">Keyboard ← → · F11 fullscreen · Click text to select &amp; copy</p>
+  </div>
 
   <script>
     let n = 1;
     const total = 20;
-    document.addEventListener('keydown', e => {
-      if (e.key === 'ArrowRight' || e.key === ' ') { n = Math.min(n + 1, total); show(); }
-      if (e.key === 'ArrowLeft') { n = Math.max(n - 1, 1); show(); }
-    });
-    document.body.addEventListener('click', (e) => { if (!e.target.closest('.deck-header') && !e.target.closest('.nav')) { n = Math.min(n + 1, total); show(); } });
+    const prevBtn = document.getElementById('deckPrev');
+    const nextBtn = document.getElementById('deckNext');
+
     function show() {
-      document.querySelectorAll('.slide').forEach((s,i) => s.style.display = i+1===n ? 'block' : 'none');
+      document.querySelectorAll('.slide').forEach((s, i) => { s.style.display = i + 1 === n ? 'block' : 'none'; });
       document.getElementById('slideNum').textContent = n + ' of ' + total;
+      prevBtn.disabled = n <= 1;
+      nextBtn.disabled = n >= total;
     }
+
+    prevBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      n = Math.max(n - 1, 1);
+      show();
+    });
+    nextBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      n = Math.min(n + 1, total);
+      show();
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+      var sel = window.getSelection();
+      if (sel && !sel.isCollapsed) return;
+      e.preventDefault();
+      if (e.key === 'ArrowRight') {
+        n = Math.min(n + 1, total);
+      } else {
+        n = Math.max(n - 1, 1);
+      }
+      show();
+    });
+
     show();
   </script>
 </body>
