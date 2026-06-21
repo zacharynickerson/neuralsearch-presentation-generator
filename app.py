@@ -156,13 +156,13 @@ INDEX_HTML = """
 
       <form method="POST" action="/generate">
         <label class="required">Customer name</label>
-        <input type="text" name="customer_name" placeholder="e.g. BFL Store" required value="{{ request.form.get('customer_name', '') }}">
+        <input type="text" name="customer_name" placeholder="e.g. BFL Store" required value="{{ prefill.customer_name }}">
 
         <label class="required">Algolia App ID</label>
-        <input type="text" name="app_id" placeholder="e.g. 2MMV84221Y" required value="{{ request.form.get('app_id', '') }}">
+        <input type="text" name="app_id" placeholder="e.g. 2MMV84221Y" required value="{{ prefill.app_id }}">
 
         <label class="required">Index name</label>
-        <input type="text" name="index_name" placeholder="e.g. p_bflstore_product_rfc" required value="{{ request.form.get('index_name', '') }}">
+        <input type="text" name="index_name" placeholder="e.g. p_bflstore_product_rfc" required value="{{ prefill.index_name }}">
 
         <label class="required">Admin API key</label>
         <input type="password" name="admin_api_key" placeholder="Admin key (covers search + analytics)" required>
@@ -172,19 +172,19 @@ INDEX_HTML = """
           <div>
             <label>Region</label>
             <select name="region">
-              <option value="US">US</option>
-              <option value="EU">EU</option>
+              <option value="US"{% if prefill.region == 'US' %} selected{% endif %}>US</option>
+              <option value="EU"{% if prefill.region == 'EU' %} selected{% endif %}>EU</option>
             </select>
             <p class="note">Analytics endpoint — use EU if your app is in the EU region.</p>
           </div>
           <div>
             <label>Days of analytics data</label>
-            <input type="number" name="days_back" value="90" min="30" max="365">
+            <input type="number" name="days_back" value="{{ prefill.days_back }}" min="30" max="365">
           </div>
         </div>
 
         <label style="display: flex; align-items: flex-start; gap: 10px; font-weight: 500; cursor: pointer; margin-bottom: 8px;">
-          <input type="checkbox" name="customer_has_neural_access" checked style="width: auto; margin: 3px 0 0; flex-shrink: 0;">
+          <input type="checkbox" name="customer_has_neural_access"{% if prefill.neural_access != '0' %} checked{% endif %} style="width: auto; margin: 3px 0 0; flex-shrink: 0;">
           <span style="font-size: 13px; color: #23263b; line-height: 1.45;">Customer has Neural Search access (preview)?</span>
         </label>
         <p class="note" style="margin-top: 0;">Uncheck if this account cannot run NeuralSearch — the deck will use keyword-only result counts from your analytics (no &ldquo;With NS&rdquo; columns or side-by-side comparisons).</p>
@@ -211,7 +211,21 @@ def health():
 
 @app.route("/")
 def index():
-    return render_template_string(INDEX_HTML, error=request.args.get("error"))
+    prefill = {
+        "customer_name": request.args.get("customer_name", ""),
+        "app_id": request.args.get("app_id", ""),
+        "index_name": request.args.get("index_name", ""),
+        "region": request.args.get("region", "US"),
+        "days_back": request.args.get("days_back", "90"),
+        "neural_access": request.args.get("neural_access", "1"),
+    }
+    if prefill["region"] not in ("US", "EU"):
+        prefill["region"] = "US"
+    return render_template_string(
+        INDEX_HTML,
+        error=request.args.get("error"),
+        prefill=prefill,
+    )
 
 
 def _run_generation(job_id: str, **kwargs):
