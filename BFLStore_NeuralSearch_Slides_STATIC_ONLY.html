@@ -621,7 +621,7 @@
     }
   </style>
 </head>
-<body>
+<body class="hide-notes">
   <div class="deck-header">
     <div class="logo">
       <span class="confidential">C O N F I D E N T I A L</span>
@@ -643,20 +643,8 @@
     <h2>BFL Store — AI-powered search that understands intent</h2>
     <p>Evidence from your search analytics — where NeuralSearch can improve discovery, relevance, and conversion.</p>
     <div class="intro-chips" style="display: flex; flex-wrap: wrap; gap: 8px 12px; margin-top: 16px; font-size: 12pt;">
-      <span>lipstick 5→101</span>
-      <span>watches for women 44→100</span>
-      <span>waterproof shoes 6→97</span>
-      <span>perfumes for men 25→98</span>
-      <span>diaper bag 4→100</span>
-      <span>bath robe 6→96</span>
-      <span>formal shoes for men 20→100</span>
-      <span>wallet for men 42→104</span>
-      <span>thermal leggings 3→101</span>
-      <span>safety shoes for men 5→100</span>
-      <span>crocs for men 45→100</span>
-      <span>tweed 8→69</span>
+<!--INTRO_CHIPS-->
     </div>
-    <div class="talk-track">Open with the customer’s name and one sharp proof point. Then walk the opportunity slides that have live evidence — skip anything we auto-omitted.</div>
   </div>
 
   <!-- ══════════════════════════════════════════
@@ -681,10 +669,10 @@
         <span style="display: block; font-size: 11px; color: var(--grey-600); margin-top: 2px;">No-results rate</span>
         <span style="font-size: 10px; color: var(--grey-500);">13 queries affected</span>
       </div>
-      <div style="padding: 16px 14px; background: var(--grey-000); border-radius: 8px; border: 1px solid var(--grey-200); box-shadow: 0 1px 2px rgba(35,38,59,0.04); text-align: center;">
+      <div id="metric-cvr-card" style="padding: 16px 14px; background: var(--grey-000); border-radius: 8px; border: 1px solid var(--grey-200); box-shadow: 0 1px 2px rgba(35,38,59,0.04); text-align: center;">
         <span style="font-size: 28px; font-weight: 700; color: var(--xenon-600); display: block;">4.2%</span>
         <span style="display: block; font-size: 11px; color: var(--grey-600); margin-top: 2px;">Avg. conversion rate</span>
-        <span style="font-size: 10px; color: var(--grey-500);">NS improves conversion</span>
+        <span style="font-size: 10px; color: var(--grey-500);">From your analytics</span>
       </div>
     </div>
     <p style="font-size: 12px; color: var(--grey-500); margin-bottom: 16px;">~21.7M monthly searches · Top 10K queries analyzed</p>
@@ -696,7 +684,7 @@
       <span style="padding: 4px 10px; background: var(--grey-000); border-radius: 4px; font-size: 12px; border: 1px solid var(--grey-200);">4. Conceptual</span>
       <span style="padding: 4px 10px; background: var(--grey-000); border-radius: 4px; font-size: 12px; border: 1px solid var(--grey-200);">5. Relevancy</span>
     </div>
-    <div class="talk-track">We ran 10,000 of your top queries through NeuralSearch. Your data shows 907 thin-result queries affecting 674K searches a month — that's 3.1% of your search traffic hitting a wall. Your no-results rate matters too — for most retailers it's a major opportunity. I'll walk you through the five opportunities we found.</div>
+    <div class="talk-track">Based on your top 10,000 queries: thin-result and no-result patterns highlight where better relevance can recover search traffic.</div>
   </div>
 
   <!-- ══════════════════════════════════════════
@@ -723,17 +711,12 @@
       <div style="flex: 1; min-width: 260px;">
         <p style="font-size: 11px; color: var(--grey-500); margin-bottom: 10px;">Example queries from your data — keyword search struggles with these</p>
         <div style="display: flex; flex-wrap: wrap; gap: 6px 10px; padding: 14px 16px; background: var(--grey-000); border-radius: 8px; border: 1px solid var(--grey-200);">
-          <span style="padding: 5px 10px; background: #f2f4ff; border: 1px solid #bbd1ff; border-radius: 4px; color: #23263b; font-size: 12px;">watches for women</span>
-          <span style="padding: 5px 10px; background: #f2f4ff; border: 1px solid #bbd1ff; border-radius: 4px; color: #23263b; font-size: 12px;">formal shoes for men</span>
-          <span style="padding: 5px 10px; background: #f2f4ff; border: 1px solid #bbd1ff; border-radius: 4px; color: #23263b; font-size: 12px;">waterproof shoes</span>
-          <span style="padding: 5px 10px; background: #f2f4ff; border: 1px solid #bbd1ff; border-radius: 4px; color: #23263b; font-size: 12px;">gift for new mom</span>
-          <span style="padding: 5px 10px; background: #f2f4ff; border: 1px solid #bbd1ff; border-radius: 4px; color: #23263b; font-size: 12px;">perfumes for men</span>
-          <span style="padding: 5px 10px; background: #f2f4ff; border: 1px solid #bbd1ff; border-radius: 4px; color: #23263b; font-size: 12px;">diaper bag</span>
+<!--LONG_TAIL_CHIPS-->
         </div>
       </div>
     </div>
     <p>Shoppers don't search like your catalog. They use natural phrases and concepts. Keyword search matches characters — NeuralSearch matches intent. More discovery, fewer dead ends.</p>
-    <div class="talk-track">Half to two-thirds of your search traffic is long-tail — unique phrases, natural language, conceptual queries. Keyword search was built for exact matches. It can't connect "gift for new mom" to diaper bags, or "waterproof" to products that say "rain cover." NeuralSearch closes that gap. Retailers we've tested have seen dramatic drops in zero-result searches and increases in conversion.</div>
+    <div class="talk-track">Most search traffic is long-tail: unique phrases, natural language, and conceptual queries. Keyword matching was built for exact terms — NeuralSearch is built for intent.</div>
   </div>
 
   <!-- ══════════════════════════════════════════
@@ -769,20 +752,9 @@
     </div>
     <div class="table-wrap"><table>
       <tr><th>Search</th><th>Without NS</th><th>With NS</th><th>Searches</th></tr>
-      <tr><td class="search-term">lipstick</td><td>5</td><td>101</td><td>2,780</td></tr>
-      <tr><td class="search-term">bath robe</td><td>6</td><td>96</td><td>1,647</td></tr>
-      <tr><td class="search-term">thermal leggings</td><td>3</td><td>101</td><td>1,076</td></tr>
-      <tr><td class="search-term">tweed</td><td>8</td><td>69</td><td>1,018</td></tr>
-      <tr><td class="search-term">diaper bag</td><td>4</td><td>100</td><td>1,601</td></tr>
-      <tr><td class="search-term">waterproof shoes</td><td>6</td><td>97</td><td>1,444</td></tr>
-      <tr><td class="search-term">snow pants</td><td>10</td><td>95</td><td>2,671</td></tr>
-      <tr><td class="search-term">helmet</td><td>6</td><td>100</td><td>2,148</td></tr>
-      <tr><td class="search-term">christmas sweater</td><td>2</td><td>95</td><td>—</td></tr>
-      <tr><td class="search-term">tennis skirt</td><td>10</td><td>98</td><td>1,290</td></tr>
-      <tr><td class="search-term">keychain</td><td>7</td><td>98</td><td>1,510</td></tr>
-      <tr><td class="search-term">long socks</td><td>9</td><td>99</td><td>1,286</td></tr>
+<!--THIN_RESULTS_ROWS-->
     </table></div>
-    <div class="talk-track">You have the inventory — lipstick, bath robes, thermal leggings, tweed — but keyword search only surfaces a handful. NeuralSearch expands discovery with <strong>relevant</strong> results. It's not just more results; it's the right results. This is exactly the "fewer zero-results" benefit in action — you have the products, search just wasn't finding them.</div>
+    <div class="talk-track">When keyword search returns only a handful of hits, NeuralSearch expands discovery with <strong>relevant</strong> products you already carry.</div>
   </div>
 
   <!-- ══════════════════════════════════════════
@@ -807,14 +779,9 @@
     <p style="font-size: 12px; color: var(--grey-500); margin-bottom: 12px;">For most retailers, no-results rate is a major opportunity. Typos, synonyms, and alternative phrasing return zero — but you have the products.</p>
     <div class="table-wrap"><table>
       <tr><th>Search</th><th>Without NS</th><th>With NS</th><th>Searches</th></tr>
-      <tr><td class="search-term">addidas</td><td>0</td><td>89</td><td>—</td></tr>
-      <tr><td class="search-term">cologne for men</td><td>0</td><td>95</td><td>—</td></tr>
-      <tr><td class="search-term">makeup</td><td>0</td><td>102</td><td>—</td></tr>
-      <tr><td class="search-term">mens perfume</td><td>0</td><td>88</td><td>—</td></tr>
-      <tr><td class="search-term">nike runing shoes</td><td>0</td><td>76</td><td>—</td></tr>
-      <tr><td class="search-term">womens watches</td><td>0</td><td>112</td><td>—</td></tr>
+<!--NO_RESULTS_ROWS-->
     </table></div>
-    <div class="talk-track">No results is critical for most customers — even if your account has few today. Keyword search fails on typos like "addidas," synonyms like "cologne" for perfume, or phrasing like "makeup" when your catalog says "cosmetics." NeuralSearch understands intent and surfaces products. Frasers Group saw an 80% drop in no-result searches. This opportunity matters.</div>
+    <div class="talk-track">Typos, synonyms, and alternate phrasing often return zero results even when products exist. NeuralSearch recovers those dead ends by matching intent — Frasers Group saw an 80% drop in no-result searches in testing.</div>
   </div>
 
   <!-- ══════════════════════════════════════════
@@ -823,29 +790,14 @@
   <div class="slide" id="slide6" data-slide-num="6 of 20" style="display:none;">
     <h1>3. Natural language</h1>
     <p class="benefit">Shoppers search the way they talk. NeuralSearch surfaces relevant results for natural phrases.</p>
-    <div class="slide-graphic" style="margin-bottom: 20px;">
-      <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-        <div style="padding: 10px 18px; background: var(--grey-000); border-radius: 6px; font-size: 13px; color: var(--grey-600); border: 1px solid var(--grey-200);">"watches for women"</div>
-        <div style="padding: 10px 18px; background: var(--grey-000); border-radius: 6px; font-size: 13px; color: var(--grey-600); border: 1px solid var(--grey-200);">"formal shoes for men"</div>
-        <div style="padding: 10px 18px; background: var(--xenon-100); border-radius: 6px; font-size: 13px; color: var(--xenon-600); border: 1px solid var(--xenon-200); font-weight: 600;">17,600 searches</div>
-      </div>
+    <div class="slide-graphic" style="margin-bottom: 20px;" id="nl-examples">
+<!--NL_EXAMPLES-->
     </div>
     <div class="table-wrap"><table>
       <tr><th>Search</th><th>Without NS</th><th>With NS</th><th>Searches</th></tr>
-      <tr><td class="search-term">watches for women</td><td>44</td><td>118</td><td>17,600</td></tr>
-      <tr><td class="search-term">formal shoes for men</td><td>20</td><td>105</td><td>8,500</td></tr>
-      <tr><td class="search-term">wedges for women</td><td>51</td><td>108</td><td>—</td></tr>
-      <tr><td class="search-term">wallet for men</td><td>42</td><td>110</td><td>8,745</td></tr>
-      <tr><td class="search-term">perfumes for women</td><td>49</td><td>112</td><td>3,096</td></tr>
-      <tr><td class="search-term">crocs for men</td><td>45</td><td>108</td><td>9,552</td></tr>
-      <tr><td class="search-term">caps for men</td><td>353</td><td>378</td><td>16,933</td></tr>
-      <tr><td class="search-term">belt for men</td><td>34</td><td>102</td><td>6,032</td></tr>
-      <tr><td class="search-term">heels for women</td><td>42</td><td>108</td><td>3,607</td></tr>
-      <tr><td class="search-term">socks for men</td><td>137</td><td>152</td><td>14,794</td></tr>
-      <tr><td class="search-term">bags for men</td><td>250</td><td>272</td><td>7,808</td></tr>
-      <tr><td class="search-term">perfume for her</td><td>35</td><td>102</td><td>1,798</td></tr>
+<!--NL_ROWS-->
     </table></div>
-    <div class="talk-track">Shoppers don't search like your catalog. They type "watches for women" or "formal shoes for men" — natural phrases. Keyword search misses a lot because it's matching characters, not intent. NeuralSearch understands and surfaces <strong>relevant</strong> results. 17,600 searches for "watches for women" alone. This is the natural language benefit — shoppers search the way they talk, and NeuralSearch gets it.</div>
+    <div class="talk-track">Shoppers search the way they talk. NeuralSearch understands natural-language queries and surfaces <strong>relevant</strong> results without brittle synonym maintenance.</div>
   </div>
 
   <!-- ══════════════════════════════════════════
@@ -853,34 +805,15 @@
   ══════════════════════════════════════════ -->
   <div class="slide" id="slide7" data-slide-num="7 of 20" style="display:none;">
     <h1>4. Conceptual queries</h1>
-    <p class="benefit">Searches by concept — "waterproof shoes" surfaces Rain Covers, Snow Boots (semantically relevant).</p>
-    <div class="slide-graphic" style="margin-bottom: 16px;">
-      <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
-        <div style="padding: 12px 20px; background: var(--grey-000); border-radius: 6px; font-weight: 600; font-size: 14px; border: 1px solid var(--grey-200);">waterproof shoes</div>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--xenon-600)" stroke-width="2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-          <span style="padding: 8px 16px; background: var(--xenon-100); border: 1px solid var(--xenon-200); border-radius: 6px; font-size: 13px; color: var(--xenon-700);">Rain Cover</span>
-          <span style="padding: 8px 16px; background: var(--xenon-100); border: 1px solid var(--xenon-200); border-radius: 6px; font-size: 13px; color: var(--xenon-700);">Snow Boot</span>
-          <span style="padding: 8px 16px; background: var(--xenon-100); border: 1px solid var(--xenon-200); border-radius: 6px; font-size: 13px; color: var(--xenon-700);">Safety Jogger</span>
-        </div>
-      </div>
+    <p class="benefit">Shoppers search by concept and intent — NeuralSearch connects those queries to the right products even when the catalog wording differs.</p>
+    <div class="slide-graphic" style="margin-bottom: 16px;" id="conceptual-examples">
+<!--CONCEPTUAL_EXAMPLES-->
     </div>
     <div class="table-wrap"><table>
       <tr><th>Search</th><th>Without NS</th><th>With NS</th><th>Searches</th></tr>
-      <tr><td class="search-term">waterproof shoes</td><td>6</td><td>97</td><td>1,444</td></tr>
-      <tr><td class="search-term">safety shoes for men</td><td>5</td><td>100</td><td>1,761</td></tr>
-      <tr><td class="search-term">gift set for women</td><td>6</td><td>99</td><td>709</td></tr>
-      <tr><td class="search-term">diaper bag</td><td>4</td><td>100</td><td>1,601</td></tr>
-      <tr><td class="search-term">safety shoes</td><td>7</td><td>100</td><td>1,341</td></tr>
-      <tr><td class="search-term">leather jacket men</td><td>9</td><td>99</td><td>3,714</td></tr>
-      <tr><td class="search-term">padel racket</td><td>6</td><td>98</td><td>2,848</td></tr>
-      <tr><td class="search-term">racket</td><td>4</td><td>99</td><td>1,459</td></tr>
-      <tr><td class="search-term">headphones</td><td>8</td><td>98</td><td>1,904</td></tr>
-      <tr><td class="search-term">ski gloves</td><td>6</td><td>97</td><td>1,388</td></tr>
-      <tr><td class="search-term">alpha industries jacket</td><td>7</td><td>99</td><td>1,445</td></tr>
-      <tr><td class="search-term">evening dress</td><td>8</td><td>98</td><td>1,240</td></tr>
+<!--CONCEPTUAL_ROWS-->
     </table></div>
-    <div class="talk-track">Keyword search can't connect concepts. "Waterproof shoes" won't match "Rain Cover" or "Snow Boot" — those words aren't in the query. NeuralSearch understands semantics and surfaces the right products: rain covers, snow boots, Safety Jogger shoes, diaper bags. <strong>Relevant</strong> results, not keyword gymnastics. This is conceptual understanding — the AI connects intent to products even when the words don't match.</div>
+    <div class="talk-track">Conceptual queries often don't share words with your catalog. NeuralSearch connects intent to the right products anyway — <strong>relevant</strong> results without keyword gymnastics.</div>
   </div>
 
   <!-- ══════════════════════════════════════════
@@ -894,25 +827,14 @@
         <div style="text-align: center; padding: 16px 24px; background: var(--grey-000); border-radius: 8px; border: 1px solid var(--grey-200);"><span style="font-size: 24pt; font-weight: 700; color: var(--algolia-muted);">25</span><br><span style="font-size: 10pt; color: var(--algolia-muted);">Without NS</span></div>
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--xenon-600)" stroke-width="2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
         <div style="text-align: center; padding: 16px 24px; background: var(--xenon-100); border-radius: 8px; border: 2px solid var(--xenon-600);"><span style="font-size: 24pt; font-weight: 700; color: var(--algolia-purple);">98</span><br><span style="font-size: 10pt; color: var(--algolia-purple);">With NS</span></div>
-        <span style="font-size: 12px; color: var(--grey-500);">perfumes for men · 12K searches · 6.2% CVR</span>
+        <span style="font-size: 12px; color: var(--grey-500);" id="relevancy-highlight-meta"><!--RELEVANCY_HIGHLIGHT_META--></span>
       </div>
     </div>
     <div class="table-wrap"><table>
       <tr><th>Search</th><th>Without NS</th><th>With NS</th><th>CTR</th><th>CVR</th><th>Searches</th></tr>
-      <tr><td class="search-term">perfumes for men</td><td>25</td><td>98</td><td>27.4%</td><td>6.2%</td><td>12,000</td></tr>
-      <tr><td class="search-term">wallet for men</td><td>42</td><td>104</td><td>38.2%</td><td>4.0%</td><td>8,745</td></tr>
-      <tr><td class="search-term">perfumes for women</td><td>49</td><td>106</td><td>26.1%</td><td>8.1%</td><td>3,096</td></tr>
-      <tr><td class="search-term">watches for women</td><td>44</td><td>115</td><td>29.8%</td><td>5.1%</td><td>17,600</td></tr>
-      <tr><td class="search-term">formal shoes for men</td><td>20</td><td>98</td><td>34.7%</td><td>2.5%</td><td>8,500</td></tr>
-      <tr><td class="search-term">crocs for men</td><td>45</td><td>108</td><td>38.0%</td><td>8.4%</td><td>9,552</td></tr>
-      <tr><td class="search-term">socks for men</td><td>137</td><td>148</td><td>41.4%</td><td>17.2%</td><td>14,794</td></tr>
-      <tr><td class="search-term">caps for men</td><td>353</td><td>368</td><td>39.0%</td><td>11.5%</td><td>16,933</td></tr>
-      <tr><td class="search-term">belt for men</td><td>34</td><td>98</td><td>44.3%</td><td>8.8%</td><td>6,032</td></tr>
-      <tr><td class="search-term">heels for women</td><td>42</td><td>108</td><td>25.8%</td><td>2.4%</td><td>3,607</td></tr>
-      <tr><td class="search-term">bags for men</td><td>250</td><td>268</td><td>35.4%</td><td>7.5%</td><td>7,808</td></tr>
-      <tr><td class="search-term">vans shoes for men</td><td>63</td><td>112</td><td>47.0%</td><td>8.6%</td><td>8,117</td></tr>
+<!--RELEVANCY_ROWS-->
     </table></div>
-    <div class="talk-track">High volume + few results means the right products are buried. "Perfumes for men" — 12,000 searches, only 25 results shown. "Wallet for men" — 8,745 searches, 42 results. NeuralSearch surfaces more <strong>relevant</strong> options. We can show you the before/after in a live demo. These are high-intent searches with strong CTR and CVR — improving relevance here has real revenue impact.</div>
+    <div class="talk-track">High-volume queries with few results bury the products shoppers want. NeuralSearch surfaces more <strong>relevant</strong> options on those high-intent searches.</div>
   </div>
 
   <!-- ══════════════════════════════════════════
@@ -932,7 +854,7 @@
         <div style="padding: 18px 20px; background: var(--grey-050); border-radius: 10px; border: 1px solid var(--grey-200);">
           <p style="font-size: 11px; font-weight: 700; color: var(--grey-500); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em;">Your inputs</p>
           <p style="font-size: 13px; margin: 0 0 6px;"><strong><span class="revenue-thin-searches">674,000</span></strong> eligible searches/mo</p>
-          <p style="font-size: 13px; margin: 0 0 6px;"><strong><span class="revenue-baseline-cvr">4.2</span>%</strong> baseline CVR</p>
+          <p style="font-size: 13px; margin: 0 0 6px;" id="revenue-cvr-line"><strong><span class="revenue-baseline-cvr">4.2</span>%</strong> baseline CVR</p>
           <p style="font-size: 13px; margin: 0;"><strong>2.9%</strong> CVR uplift (measured)</p>
         </div>
         <div style="padding: 18px 20px; background: var(--xenon-100); border-radius: 10px; border: 1px solid var(--xenon-200);">
@@ -942,7 +864,7 @@
         </div>
       </div>
     </div>
-    <div class="talk-track">This is real. 674K searches a month hitting thin results. A 2.9% CVR uplift from measured A/B tests. Plug in your AOV — the number gets big fast. This is why we're here.</div>
+    <div class="talk-track">Projected uplift uses your thin-result search volume, a measured relative CVR lift from A/B tests, and AOV — so the model reflects your traffic, not a generic benchmark alone.</div>
   </div>
 
   <!-- ══════════════════════════════════════════
@@ -1146,7 +1068,7 @@
         </ul>
       </div>
     </div>
-    <div class="talk-track">For anyone who needs the elevator pitch: here's the problem, the solution, the proof, and the ask — all on one slide.</div>
+    <div class="talk-track">Problem, solution, proof, and recommended next step — summarized for your team.</div>
   </div>
 
   <!-- ══════════════════════════════════════════
@@ -1247,45 +1169,50 @@
        SLIDE 12 — NeuralSearch learns
   ══════════════════════════════════════════ -->
   <div class="slide" id="slide18" data-slide-num="18 of 20" style="display:none;">
-    <h1>Adaptive Intent — learns from your customers</h1>
-    <p class="benefit">Customer behavior becomes training data. Results adapt in real time. No fine-tuning required.</p>
-    <div style="display: flex; align-items: stretch; gap: 0; margin: 20px 0; border-radius: 10px; overflow: hidden; border: 1px solid var(--grey-200);">
-      <div style="flex: 1; padding: 16px 20px; background: var(--grey-050); text-align: center; border-right: 1px solid var(--grey-200);">
-        <p style="font-size: 11px; font-weight: 700; color: var(--grey-500); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em;">1. Search</p>
-        <p style="font-size: 13px; color: var(--grey-800); margin: 0;">"beach dress"</p>
+    <h1>Adaptive Intent</h1>
+    <p class="benefit">Relevance that improves from your shoppers’ real behavior — not a one-time model setup.</p>
+    <div style="display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 20px; margin: 22px 0; align-items: stretch;">
+      <div style="padding: 22px 24px; border-radius: 16px; border: 1px solid var(--grey-200); background: linear-gradient(180deg,#fff,#f7f8fd);">
+        <p style="font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--xenon-600); margin-bottom: 14px;">How it works</p>
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <div style="display: flex; gap: 12px; align-items: flex-start;">
+            <span style="flex: 0 0 28px; height: 28px; border-radius: 999px; background: var(--xenon-600); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800;">1</span>
+            <div>
+              <p style="margin: 0 0 2px; font-weight: 700; color: var(--grey-900);">Shoppers search</p>
+              <p style="margin: 0; font-size: 13px; color: var(--grey-600);">Natural queries, brand terms, and niche language unique to your catalog.</p>
+            </div>
+          </div>
+          <div style="display: flex; gap: 12px; align-items: flex-start;">
+            <span style="flex: 0 0 28px; height: 28px; border-radius: 999px; background: var(--xenon-600); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800;">2</span>
+            <div>
+              <p style="margin: 0 0 2px; font-weight: 700; color: var(--grey-900);">They click and convert</p>
+              <p style="margin: 0; font-size: 13px; color: var(--grey-600);">Those outcomes become live relevance signals — not a separate training project.</p>
+            </div>
+          </div>
+          <div style="display: flex; gap: 12px; align-items: flex-start;">
+            <span style="flex: 0 0 28px; height: 28px; border-radius: 999px; background: var(--xenon-600); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800;">3</span>
+            <div>
+              <p style="margin: 0 0 2px; font-weight: 700; color: var(--grey-900);">Ranking adapts</p>
+              <p style="margin: 0; font-size: 13px; color: var(--grey-600);">Future results prioritize what your customers actually engage with and buy.</p>
+            </div>
+          </div>
+        </div>
       </div>
-      <div style="flex: 0 0 36px; display: flex; align-items: center; justify-content: center; background: var(--grey-100);"><span style="font-size: 18px; color: var(--xenon-600); font-weight: 700;">→</span></div>
-      <div style="flex: 1; padding: 16px 20px; background: var(--grey-050); text-align: center; border-right: 1px solid var(--grey-200);">
-        <p style="font-size: 11px; font-weight: 700; color: var(--grey-500); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em;">2. Clicks &amp; purchases</p>
-        <p style="font-size: 13px; color: var(--grey-800); margin: 0;">Customer behavior</p>
-      </div>
-      <div style="flex: 0 0 36px; display: flex; align-items: center; justify-content: center; background: var(--grey-100);"><span style="font-size: 18px; color: var(--xenon-600); font-weight: 700;">→</span></div>
-      <div style="flex: 1; padding: 16px 20px; background: var(--xenon-100); text-align: center; border-right: 1px solid var(--xenon-200);">
-        <p style="font-size: 11px; font-weight: 700; color: var(--xenon-700); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em;">3. System learns</p>
-        <p style="font-size: 13px; color: var(--grey-900); margin: 0; font-weight: 600;">"When people search X, they buy Y"</p>
-      </div>
-      <div style="flex: 0 0 36px; display: flex; align-items: center; justify-content: center; background: var(--xenon-200);"><span style="font-size: 18px; color: var(--xenon-700); font-weight: 700;">→</span></div>
-      <div style="flex: 1; padding: 16px 20px; background: var(--xenon-100); text-align: center;">
-        <p style="font-size: 11px; font-weight: 700; color: var(--xenon-700); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em;">4. Results adapt</p>
-        <p style="font-size: 13px; color: var(--grey-900); margin: 0; font-weight: 600;">Products that convert</p>
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div style="padding: 18px 18px; border-radius: 14px; border: 1px solid var(--grey-200); background: #fff;">
+          <p style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--grey-500); margin-bottom: 8px;">Without Adaptive Intent</p>
+          <p style="margin: 0; font-size: 14px; color: var(--grey-700); line-height: 1.45;">Results lean on static similarity — what looks related, not what converts for your store.</p>
+        </div>
+        <div style="padding: 18px 18px; border-radius: 14px; border: 1px solid var(--xenon-200); background: var(--xenon-100);">
+          <p style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--xenon-700); margin-bottom: 8px;">With Adaptive Intent</p>
+          <p style="margin: 0; font-size: 14px; color: var(--grey-900); line-height: 1.45; font-weight: 600;">Results learn from your traffic patterns, brands, and purchase behavior automatically.</p>
+        </div>
+        <div style="padding: 14px 16px; border-radius: 12px; background: var(--grey-050); border: 1px solid var(--grey-200);">
+          <p style="margin: 0; font-size: 13px; color: var(--grey-700); line-height: 1.45;"><strong style="color: var(--grey-900);">Included with NeuralSearch</strong> — no fine-tuning team, no separate model ops, no extra product to buy.</p>
+        </div>
       </div>
     </div>
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 16px 0;">
-      <div style="padding: 20px; background: var(--grey-000); border-radius: 8px; border: 1px solid var(--grey-200);">
-        <p style="font-size: 12px; font-weight: 600; color: var(--grey-500); margin-bottom: 10px;">Generic AI</p>
-        <p style="font-size: 14px; line-height: 1.5; color: var(--grey-700); margin: 0;">"Beach dress" → semantically similar products.</p>
-      </div>
-      <div style="padding: 20px; background: var(--xenon-100); border-radius: 8px; border: 1px solid var(--xenon-200);">
-        <p style="font-size: 12px; font-weight: 600; color: var(--xenon-700); margin-bottom: 10px;">Adaptive Intent</p>
-        <p style="font-size: 14px; line-height: 1.5; color: var(--grey-800); margin: 0;">"Beach dress" → the dresses your customers actually buy.</p>
-      </div>
-    </div>
-    <div style="display: flex; flex-wrap: wrap; gap: 8px 10px; margin-top: 12px;">
-      <span style="padding: 5px 10px; background: #f2f4ff; border: 1px solid #bbd1ff; border-radius: 4px; color: #23263b; font-size: 12px;">Learns brand names &amp; niche terms</span>
-      <span style="padding: 5px 10px; background: #f2f4ff; border: 1px solid #bbd1ff; border-radius: 4px; color: #23263b; font-size: 12px;">Uses your existing click &amp; conversion events</span>
-      <span style="padding: 5px 10px; background: #f2f4ff; border: 1px solid #bbd1ff; border-radius: 4px; color: #23263b; font-size: 12px;">Included with NeuralSearch — no extra cost</span>
-    </div>
-    <div class="talk-track">Adaptive Intent turns customer behavior into intelligence. Every click and conversion trains the system on what your customers actually want. Search for "beach dress"? Generic AI shows semantically similar products. Adaptive Intent shows the dresses your customers buy — because it learned from thousands of past purchases. It's night and day. No fine-tuning, no data science team. Works automatically with your existing event data.</div>
+    <div class="talk-track">Adaptive Intent uses your existing click and conversion events so relevance keeps improving for your catalog — brand names, niche terms, and what actually sells — without a custom ML project.</div>
   </div>
 
   <!-- ══════════════════════════════════════════
@@ -1296,10 +1223,10 @@
     <p class="benefit">High-volume, high-intent queries where NeuralSearch can improve discovery and relevance.</p>
     <div class="table-wrap" style="max-height: 320px; overflow-y: auto;">
       <div class="query-grid">
-        <span>shoes for men</span><span>jacket for men</span><span>shoes for women</span><span>watches for men</span><span>watches for women</span><span>caps for men</span><span>jeans for men</span><span>socks for men</span><span>perfumes for men</span><span>hoodies for women</span><span>bra for women</span><span>basketball shoes for men</span><span>wide leg</span><span>wallet for men</span><span>running shoes for men</span><span>jacket for women</span><span>formal shoes for men</span><span>shoes for kids</span><span>bags for men</span><span>boxers for men</span><span>sandals for men</span><span>bath robe</span><span>thermal leggings</span><span>diaper bag</span><span>waterproof shoes</span><span>snow pants</span><span>tennis skirt</span><span>christmas sweater</span><span>long socks</span><span>gift for mom</span><span>gift set for women</span><span>safety shoes for men</span><span>evening dress</span><span>leather jacket men</span><span>padel racket</span><span>ski gloves</span><span>perfume for her</span><span>wedges for women</span><span>dress for women</span><span>sandals for women</span><span>pajama set for women</span><span>tote bag for women</span><span>belt for men</span><span>heels for women</span><span>perfumes for women</span><span>lipstick for women</span><span>gym shoes for men</span><span>sport jacket for men</span><span>long sleeve shirt</span><span>white dress for women</span><span>black dress for women</span><span>ski jacket for men</span><span>comfortable shoes for men</span><span>gift for dad</span><span>winter jacket for men</span><span>summer dress for women</span><span>running shoes for women</span><span>tote bag for men</span><span>hoodies for men</span><span>sweat pants for men</span><span>backpack for men</span><span>body lotion for women</span><span>wide leg pants</span><span>waterproof jacket</span><span>fit and flare dress</span><span>جاکیت برای مردان</span><span>فستان برای زنان</span><span>ملابس مردانه</span><span>طقم زنانه</span><span>headphones for men</span><span>bath robe for women</span><span>work boots for men</span><span>dress shoes for men</span><span>casual shoes for men</span><span>swim shorts for men</span><span>blazer for men</span><span>cardigan for women</span><span>maxi dress for women</span><span>midi dress for women</span><span>ankle boots for women</span><span>boots for men</span><span>sneakers for men</span><span>sneakers for women</span>
+<!--TOP100_QUERIES-->
       </div>
     </div>
-    <div class="talk-track">These are the top 100 queries that are strong fits for NeuralSearch — semantic phrases, natural language, conceptual queries, and revenue opportunities. Combined, they represent millions of searches. Here's how we can move forward.</div>
+    <div class="talk-track">High-fit queries from your analytics where NeuralSearch can improve discovery and relevance.</div>
   </div>
 
   <!-- ══════════════════════════════════════════
@@ -1315,15 +1242,15 @@
       <p style="margin: 0 0 8px; font-size: 15px; font-weight: 600; color: var(--grey-900);">4. 30-day A/B test — review CVR, revenue, no-results rate together</p>
       <p style="margin: 0; font-size: 15px; font-weight: 600; color: var(--grey-900);">5. You decide</p>
     </div>
-    <div class="talk-track">Specific ask: I'm sending a calendar invite for a 30-minute A/B test kickoff. We'll have you in Preview Mode by end of week. You'll see your before/after in your own dashboard. At the end of 30 days, we review the data together — CVR, revenue, no-results rate — and you decide. No commitment. The test is free. Overages during the test are waived.</div>
+    <div class="talk-track">Recommended next step: a 30-day A/B test in Preview Mode. Review conversion, revenue, and no-results impact together — with the ability to pause or roll back. Trial is free; overages during the test are waived.</div>
   </div>
 
   <div class="deck-controls" id="deckControls" role="toolbar" aria-label="Slide navigation">
     <button type="button" class="deck-nav-btn" id="deckPrev" aria-label="Previous slide">←</button>
     <span class="slide-num" id="slideNum">1 of 20</span>
     <button type="button" class="deck-nav-btn" id="deckNext" aria-label="Next slide">→</button>
-    <button type="button" class="deck-notes-toggle" id="notesToggle" aria-pressed="true">Hide notes</button>
-    <p class="deck-hint">Keyboard ← → · Notes hidden in PDF export · Click text to copy</p>
+    <button type="button" class="deck-notes-toggle" id="notesToggle" aria-pressed="false">Show notes</button>
+    <p class="deck-hint">Keyboard ← → · Customer-ready by default · Click text to copy</p>
   </div>
 
   <script>
