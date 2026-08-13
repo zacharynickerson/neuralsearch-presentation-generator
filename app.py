@@ -4,10 +4,14 @@ NeuralSearch Presentation Generator — Flask app.
 Sales reps enter customer details and Algolia credentials, then generate a custom presentation.
 """
 
+import json
 import os
-import uuid
+import re
 import threading
+import uuid
+from datetime import datetime, timezone
 from pathlib import Path
+
 from flask import Flask, render_template_string, request, redirect, url_for, send_file, jsonify
 
 # Add app directory to path for generator imports (works for local + Railway)
@@ -27,11 +31,148 @@ except ImportError:
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-in-production")
 
-# Store generated presentations and job status in memory (or use Redis/DB in production)
+# In-memory caches (backed by generated/index.json so downloads survive restarts)
 presentations = {}
 jobs = {}  # job_id -> {"status": "pending"|"done"|"error", "pid": str, "error": str}
 OUTPUT_DIR = Path(__file__).parent / "generated"
 OUTPUT_DIR.mkdir(exist_ok=True)
+INDEX_PATH = OUTPUT_DIR / "index.json"
+
+SLIDE_TITLES = [
+    (1, "Cover"),
+    (2, "Your search data"),
+    (3, "Why NeuralSearch matters"),
+    (4, "Thin results"),
+    (5, "No results"),
+    (6, "Natural language"),
+    (7, "Conceptual"),
+    (8, "Relevancy"),
+    (9, "Revenue impact"),
+    (10, "What is NeuralSearch"),
+    (11, "How it works"),
+    (12, "Case studies"),
+    (13, "Why now"),
+    (14, "Why Algolia"),
+    (15, "Built for production"),
+    (16, "Features"),
+    (17, "Multi-lingual"),
+    (18, "Adaptive Intent"),
+    (19, "Top 100 queries"),
+    (20, "Next step"),
+]
+
+
+def _load_presentation_index():
+    """Load persisted presentation metadata into memory."""
+    if not INDEX_PATH.exists():
+        return
+    try:
+        data = json.loads(INDEX_PATH.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return
+    if not isinstance(data, dict):
+        return
+    for pid, meta in data.items():
+        if not isinstance(meta, dict):
+            continue
+        path = meta.get("path") or str(OUTPUT_DIR / f"presentation_{pid}.html")
+        if Path(path).exists():
+            presentations[pid] = {
+                "path": path,
+                "customer": meta.get("customer", "NeuralSearch"),
+                "created_at": meta.get("created_at"),
+                "uplift": meta.get("uplift", 0),
+            }
+
+
+def _save_presentation_index():
+    """Persist presentation metadata for restart-safe downloads."""
+    payload = {}
+    for pid, meta in presentations.items():
+        payload[pid] = {
+            "path": meta.get("path"),
+            "customer": meta.get("customer", "NeuralSearch"),
+            "created_at": meta.get("created_at"),
+            "uplift": meta.get("uplift", 0),
+        }
+    INDEX_PATH.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+
+def _get_presentation(pid: str):
+    if pid in presentations:
+        meta = presentations[pid]
+        if Path(meta["path"]).exists():
+            return meta
+    # Try disk recovery
+    path = OUTPUT_DIR / f"presentation_{pid}.html"
+    if path.exists():
+        meta = {
+            "path": str(path),
+            "customer": "NeuralSearch",
+            "created_at": None,
+            "uplift": 0,
+        }
+        presentations[pid] = meta
+        return meta
+    return None
+
+
+def _parse_omit(raw: str):
+    """Parse comma-separated slide numbers into a sorted unique list."""
+    if not raw:
+        return []
+    out = []
+    seen = set()
+    for part in str(raw).split(","):
+        part = part.strip()
+        if not part:
+            continue
+        try:
+            n = int(part)
+        except ValueError:
+            continue
+        if 1 <= n <= 20 and n not in seen:
+            seen.add(n)
+            out.append(n)
+    return sorted(out)
+
+
+def _inject_omit_into_html(html: str, omit: list) -> str:
+    """Ensure downloaded/PDF HTML applies the omit list even without query params."""
+    omit_json = json.dumps(omit)
+    snippet = (
+        f"<!--NS_OMIT_INJECT-->"
+        f"<script>window.__OMITTED_SLIDES__={omit_json};</script>\n"
+    )
+    if "<!--NS_OMIT_INJECT-->" in html:
+        html = re.sub(
+            r"<!--NS_OMIT_INJECT--><script>window\.__OMITTED_SLIDES__=.*?</script>\s*",
+            snippet,
+            html,
+            count=1,
+            flags=re.DOTALL,
+        )
+        return html
+    if "</head>" in html:
+        return html.replace("</head>", snippet + "</head>", 1)
+    return snippet + html
+
+
+def _read_uplift_from_html(path: Path) -> int:
+    try:
+        text = path.read_text(encoding="utf-8", errors="ignore")[:4000]
+    except OSError:
+        return 0
+    m = re.search(r'<meta name="ns-uplift" content="(\d+)"', text)
+    if not m:
+        return 0
+    try:
+        return int(m.group(1))
+    except ValueError:
+        return 0
+
+
+_load_presentation_index()
 
 
 INDEX_HTML = """
@@ -183,6 +324,10 @@ INDEX_HTML = """
           </div>
         </div>
 
+        <label>Average order value ($)</label>
+        <input type="number" name="aov" placeholder="Optional — e.g. 80" min="1" step="0.01" value="{{ prefill.aov }}">
+        <p class="note">Optional. Use when the customer is not sending purchase/revenue events into Algolia analytics. Leave blank to use the $80 example AOV.</p>
+
         <label style="display: flex; align-items: flex-start; gap: 10px; font-weight: 500; cursor: pointer; margin-bottom: 8px;">
           <input type="checkbox" name="customer_has_neural_access"{% if prefill.neural_access != '0' %} checked{% endif %} style="width: auto; margin: 3px 0 0; flex-shrink: 0;">
           <span style="font-size: 13px; color: #23263b; line-height: 1.45;">Customer has Neural Search access (preview)?</span>
@@ -209,6 +354,16 @@ def health():
     return "ok", 200
 
 
+@app.route("/logos/<path:filename>")
+def logos(filename):
+    """Serve logo assets for embed/PDF when not inlined as data URIs."""
+    logos_dir = APP_DIR / "logos"
+    path = (logos_dir / filename).resolve()
+    if not str(path).startswith(str(logos_dir.resolve())) or not path.exists():
+        return "Not found", 404
+    return send_file(path)
+
+
 @app.route("/")
 def index():
     prefill = {
@@ -218,6 +373,7 @@ def index():
         "region": request.args.get("region", "US"),
         "days_back": request.args.get("days_back", "90"),
         "neural_access": request.args.get("neural_access", "1"),
+        "aov": request.args.get("aov", ""),
     }
     if prefill["region"] not in ("US", "EU"):
         prefill["region"] = "US"
@@ -235,7 +391,14 @@ def _run_generation(job_id: str, **kwargs):
         pid = str(uuid.uuid4())[:8]
         out_path = OUTPUT_DIR / f"presentation_{pid}.html"
         out_path.write_text(result["html"], encoding="utf-8")
-        presentations[pid] = {"path": str(out_path), "customer": kwargs["customer_name"]}
+        ctx = result.get("context") or {}
+        presentations[pid] = {
+            "path": str(out_path),
+            "customer": kwargs["customer_name"],
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "uplift": int(ctx.get("uplift") or 0),
+        }
+        _save_presentation_index()
         jobs[job_id] = {"status": "done", "pid": pid}
     except Exception as e:
         jobs[job_id] = {"status": "error", "error": str(e)}
@@ -335,6 +498,15 @@ def generate():
     region = request.form.get("region", "US")
     days_back = int(request.form.get("days_back", 90))
     include_neural_comparison = request.form.get("customer_has_neural_access") == "on"
+    aov_raw = request.form.get("aov", "").strip()
+    aov = None
+    if aov_raw:
+        try:
+            aov = float(aov_raw)
+            if aov <= 0:
+                aov = None
+        except ValueError:
+            aov = None
 
     if not all([customer_name, app_id, index_name, admin_api_key]):
         return redirect(url_for("index", error="All required fields must be filled."))
@@ -354,6 +526,7 @@ def generate():
             "region": region,
             "days_back": days_back,
             "include_neural_comparison": include_neural_comparison,
+            "aov": aov,
         },
     )
     thread.daemon = True
@@ -371,55 +544,105 @@ def status(job_id):
 
 @app.route("/view/<pid>")
 def view(pid):
-    if pid not in presentations:
+    meta = _get_presentation(pid)
+    if not meta:
         return redirect(url_for("index", error="Presentation not found or expired."))
-    return render_template_string(VIEW_HTML, pid=pid, customer=presentations[pid].get("customer", ""))
+    uplift = meta.get("uplift")
+    if uplift is None:
+        uplift = _read_uplift_from_html(Path(meta["path"]))
+        meta["uplift"] = uplift
+    return render_template_string(
+        VIEW_HTML,
+        pid=pid,
+        customer=meta.get("customer", ""),
+        uplift=uplift or 0,
+        slides=SLIDE_TITLES,
+    )
+
 
 @app.route("/embed/<pid>")
 def embed(pid):
-    """Serve raw HTML for iframe embedding."""
-    if pid not in presentations:
+    """Serve raw HTML for iframe embedding (supports ?omit=9,17)."""
+    meta = _get_presentation(pid)
+    if not meta:
         return "Not found", 404
-    path = Path(presentations[pid]["path"])
+    path = Path(meta["path"])
     if not path.exists():
         return "File not found", 404
+    omit = _parse_omit(request.args.get("omit", ""))
+    if omit:
+        html = path.read_text(encoding="utf-8")
+        html = _inject_omit_into_html(html, omit)
+        return html, 200, {"Content-Type": "text/html; charset=utf-8"}
     return send_file(path, mimetype="text/html")
 
 
 @app.route("/download/<pid>")
 def download(pid):
-    if pid not in presentations:
+    meta = _get_presentation(pid)
+    if not meta:
         return redirect(url_for("index", error="Presentation not found or expired."))
-    path = Path(presentations[pid]["path"])
+    path = Path(meta["path"])
     if not path.exists():
         return redirect(url_for("index", error="Presentation file not found."))
-    customer = presentations[pid].get("customer", "NeuralSearch")
+    customer = meta.get("customer", "NeuralSearch")
     safe_name = "".join(c if c.isalnum() or c in " -_" else "_" for c in customer)
+    omit = _parse_omit(request.args.get("omit", ""))
+    if omit:
+        html = _inject_omit_into_html(path.read_text(encoding="utf-8"), omit)
+        tmp = OUTPUT_DIR / f"presentation_{pid}_export.html"
+        tmp.write_text(html, encoding="utf-8")
+        return send_file(
+            tmp,
+            as_attachment=True,
+            download_name=f"NeuralSearch_{safe_name}.html",
+            mimetype="text/html",
+        )
     return send_file(path, as_attachment=True, download_name=f"NeuralSearch_{safe_name}.html")
 
 
 @app.route("/pdf/<pid>")
 def pdf(pid):
-    """Generate PDF via Playwright (optional)."""
-    if pid not in presentations:
+    """Generate PDF via Playwright using the portable HTML file (data-URI logos)."""
+    meta = _get_presentation(pid)
+    if not meta:
         return jsonify({"error": "Presentation not found"}), 404
-    path = Path(presentations[pid]["path"])
+    path = Path(meta["path"])
     if not path.exists():
         return jsonify({"error": "File not found"}), 404
 
+    omit = _parse_omit(request.args.get("omit", ""))
     try:
         from playwright.sync_api import sync_playwright
+
+        html = path.read_text(encoding="utf-8")
+        if omit:
+            html = _inject_omit_into_html(html, omit)
+        # Temp print file keeps omit + avoids mutating the canonical HTML
+        print_path = OUTPUT_DIR / f"presentation_{pid}_print.html"
+        print_path.write_text(html, encoding="utf-8")
         pdf_path = OUTPUT_DIR / f"presentation_{pid}.pdf"
+
         with sync_playwright() as p:
             browser = p.chromium.launch(
                 args=["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"]
             )
             page = browser.new_page()
-            page.goto(f"file://{path.absolute()}")
-            page.wait_for_timeout(2000)  # Let slides render
-            page.pdf(path=str(pdf_path), format="A4", print_background=True)
+            # file:// is safe here: logos are inlined as data URIs (avoids gunicorn 1-worker deadlock)
+            page.goto(f"file://{print_path.absolute()}", wait_until="load")
+            page.wait_for_timeout(1500)
+            # Match @page size in template (16:9 deck), not A4
+            page.pdf(
+                path=str(pdf_path),
+                width="11in",
+                height="6.1875in",
+                print_background=True,
+                margin={"top": "0", "right": "0", "bottom": "0", "left": "0"},
+            )
             browser.close()
-        return send_file(pdf_path, as_attachment=True, download_name=f"NeuralSearch_{pid}.pdf")
+        customer = meta.get("customer", "NeuralSearch")
+        safe_name = "".join(c if c.isalnum() or c in " -_" else "_" for c in customer)
+        return send_file(pdf_path, as_attachment=True, download_name=f"NeuralSearch_{safe_name}.pdf")
     except ImportError:
         return jsonify({"error": "Playwright not installed. Run: playwright install chromium"}), 500
     except Exception as e:
@@ -448,7 +671,7 @@ VIEW_HTML = """
       align-items: center;
       z-index: 100;
     }
-    .toolbar a {
+    .toolbar a, .toolbar button {
       padding: 6px 14px;
       background: #36395a;
       color: #d6d6e7;
@@ -457,29 +680,190 @@ VIEW_HTML = """
       text-decoration: none;
       font-size: 13px;
       font-weight: 500;
+      font-family: inherit;
+      cursor: pointer;
       transition: background 0.15s;
     }
-    .toolbar a:hover { background: #484c7a; color: #ffffff; }
-    .toolbar a.primary {
+    .toolbar a:hover, .toolbar button:hover { background: #484c7a; color: #ffffff; }
+    .toolbar a.primary, .toolbar button.primary {
       background: #003dff;
       color: #ffffff;
       border-color: #003dff;
     }
-    .toolbar a.primary:hover { background: #022eb9; border-color: #022eb9; }
+    .toolbar a.primary:hover, .toolbar button.primary:hover { background: #022eb9; border-color: #022eb9; }
     .toolbar .spacer { flex: 1; }
     .toolbar .customer-label { font-size: 12px; color: #777aaf; font-weight: 500; }
+    .hint {
+      font-size: 11px;
+      color: #a0a3c8;
+      margin-left: 4px;
+    }
     iframe { width: 100%; height: calc(100vh - 48px); margin-top: 48px; border: none; }
+    .panel {
+      display: none;
+      position: fixed;
+      top: 48px;
+      right: 0;
+      width: min(360px, 100%);
+      max-height: calc(100vh - 48px);
+      overflow: auto;
+      background: #2c2f48;
+      border-left: 1px solid #36395a;
+      z-index: 101;
+      padding: 16px;
+      color: #d6d6e7;
+    }
+    .panel.open { display: block; }
+    .panel h3 { font-size: 14px; margin-bottom: 8px; color: #fff; }
+    .panel p { font-size: 12px; color: #a0a3c8; margin-bottom: 12px; line-height: 1.45; }
+    .panel label {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+      font-size: 12px;
+      padding: 6px 0;
+      cursor: pointer;
+      border-bottom: 1px solid #36395a;
+    }
+    .panel label input { margin-top: 2px; }
+    .panel .actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+    .panel .actions button {
+      flex: 1;
+      min-width: 120px;
+      padding: 8px 10px;
+      border-radius: 5px;
+      border: 1px solid #484c7a;
+      background: #36395a;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .panel .actions button.apply { background: #003dff; border-color: #003dff; }
+    .banner {
+      display: none;
+      position: fixed;
+      top: 48px;
+      left: 0;
+      right: 0;
+      background: #3d2e00;
+      color: #ffd666;
+      font-size: 12px;
+      padding: 8px 20px;
+      z-index: 99;
+      border-bottom: 1px solid #6b5200;
+    }
+    .banner.show { display: block; }
+    body.has-banner iframe { margin-top: 80px; height: calc(100vh - 80px); }
   </style>
 </head>
 <body>
   <div class="toolbar">
     <a href="/">← New</a>
-    <a href="/download/{{ pid }}">Download HTML</a>
-    <a href="/pdf/{{ pid }}" class="primary">Download PDF</a>
+    <button type="button" id="toggleOmit">Customize slides</button>
+    <a id="dlHtml" href="/download/{{ pid }}">Download HTML</a>
+    <a id="dlPdf" href="/pdf/{{ pid }}" class="primary">Download PDF</a>
     <span class="spacer"></span>
     <span class="customer-label">{{ customer }}</span>
   </div>
-  <iframe src="/embed/{{ pid }}" title="NeuralSearch Presentation"></iframe>
+  <div class="banner" id="zeroBanner">Revenue uplift is $0 — consider omitting the Revenue impact slide before sharing.</div>
+  <aside class="panel" id="omitPanel">
+    <h3>Slides to include</h3>
+    <p>Uncheck slides to omit them from the on-screen deck and from HTML/PDF export. Choices are saved for this presentation in this browser.</p>
+    <div id="slideChecks"></div>
+    <div class="actions">
+      <button type="button" class="apply" id="applyOmit">Apply</button>
+      <button type="button" id="resetOmit">Include all</button>
+    </div>
+  </aside>
+  <iframe id="deckFrame" src="/embed/{{ pid }}" title="NeuralSearch Presentation"></iframe>
+  <script>
+    const pid = {{ pid|tojson }};
+    const uplift = {{ uplift|tojson }};
+    const slides = {{ slides|tojson }};
+    const storageKey = "ns_omit_" + pid;
+    const frame = document.getElementById("deckFrame");
+    const panel = document.getElementById("omitPanel");
+    const checksHost = document.getElementById("slideChecks");
+    const dlHtml = document.getElementById("dlHtml");
+    const dlPdf = document.getElementById("dlPdf");
+
+    function loadOmit() {
+      try {
+        const raw = localStorage.getItem(storageKey);
+        if (!raw) return [];
+        return JSON.parse(raw).filter(function (n) { return n >= 1 && n <= 20; });
+      } catch (e) { return []; }
+    }
+
+    function saveOmit(omit) {
+      localStorage.setItem(storageKey, JSON.stringify(omit));
+    }
+
+    function omitQuery(omit) {
+      return omit.length ? ("?omit=" + omit.join(",")) : "";
+    }
+
+    function syncLinks(omit) {
+      const q = omitQuery(omit);
+      frame.src = "/embed/" + pid + q;
+      dlHtml.href = "/download/" + pid + q;
+      dlPdf.href = "/pdf/" + pid + q;
+    }
+
+    function selectedOmit() {
+      return Array.from(checksHost.querySelectorAll("input[type=checkbox]"))
+        .filter(function (el) { return !el.checked; })
+        .map(function (el) { return parseInt(el.value, 10); });
+    }
+
+    function renderChecks(omit) {
+      const omitSet = new Set(omit);
+      checksHost.innerHTML = "";
+      slides.forEach(function (pair) {
+        const num = pair[0];
+        const title = pair[1];
+        const label = document.createElement("label");
+        const input = document.createElement("input");
+        input.type = "checkbox";
+        input.value = String(num);
+        input.checked = !omitSet.has(num);
+        label.appendChild(input);
+        label.appendChild(document.createTextNode(" " + num + ". " + title));
+        checksHost.appendChild(label);
+      });
+    }
+
+    let omit = loadOmit();
+    if (!omit.length && Number(uplift) === 0) {
+      omit = [9];
+      saveOmit(omit);
+      document.getElementById("zeroBanner").classList.add("show");
+      document.body.classList.add("has-banner");
+    } else if (Number(uplift) === 0) {
+      document.getElementById("zeroBanner").classList.add("show");
+      document.body.classList.add("has-banner");
+    }
+
+    renderChecks(omit);
+    syncLinks(omit);
+
+    document.getElementById("toggleOmit").addEventListener("click", function () {
+      panel.classList.toggle("open");
+    });
+    document.getElementById("applyOmit").addEventListener("click", function () {
+      omit = selectedOmit();
+      saveOmit(omit);
+      syncLinks(omit);
+      panel.classList.remove("open");
+    });
+    document.getElementById("resetOmit").addEventListener("click", function () {
+      omit = [];
+      saveOmit(omit);
+      renderChecks(omit);
+      syncLinks(omit);
+    });
+  </script>
 </body>
 </html>
 """

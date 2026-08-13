@@ -3,16 +3,50 @@ Render NeuralSearch presentation HTML from context.
 Uses the BFL Store template (BFLStore_NeuralSearch_Slides_STATIC_ONLY.html) with dynamic data injection.
 """
 
+import base64
 import html
+import mimetypes
 import re
 from pathlib import Path
 from typing import Dict, Any, List
 
 from .multilingual_samples import build_multilingual_payload
 
+# Measured relative CVR lift from A/B tests (meeting benchmark)
+MEASURED_RELATIVE_UPLIFT = 0.029
+DEFAULT_AOV = 80
+
 
 def _chip(text: str) -> str:
     return f'<span style="padding: 5px 10px; background: #f2f4ff; border: 1px solid #bbd1ff; border-radius: 4px; color: #23263b; font-size: 13px;">{html.escape(text)}</span>'
+
+
+def _empty_table_row(show_neural: bool, message: str) -> str:
+    cols = 4 if show_neural else 3
+    return (
+        f'<tr><td colspan="{cols}" style="color: var(--grey-600); font-size: 13px;">'
+        f"{message}</td></tr>"
+    )
+
+
+def _embed_logo_assets(html_content: str, logos_dir: Path) -> str:
+    """Rewrite logos/* img src to data URIs so HTML/PDF work offline and without file:// asset paths."""
+
+    def replacer(match: re.Match) -> str:
+        rel = match.group(1)
+        name = Path(rel).name
+        path = logos_dir / name
+        if not path.exists():
+            return match.group(0)
+        mime, _ = mimetypes.guess_type(str(path))
+        if path.suffix.lower() == ".svg":
+            mime = "image/svg+xml"
+        if not mime:
+            mime = "application/octet-stream"
+        b64 = base64.b64encode(path.read_bytes()).decode("ascii")
+        return f'src="data:{mime};base64,{b64}"'
+
+    return re.sub(r'src="(logos/[^"]+)"', replacer, html_content)
 
 
 def _table_row_thin(r: dict, *, show_neural: bool) -> str:
@@ -105,13 +139,13 @@ def render_presentation(ctx: Dict[str, Any]) -> str:
     monthly_str = f"~{total_monthly / 1e6:.1f}M" if total_monthly >= 1e6 else f"~{int(total_monthly):,}"
     thin_searches_str = f"{thin_searches/1000:.0f}K" if thin_searches >= 1000 else f"{thin_searches:,}"
 
-    # Build intro chips HTML
+    # Build intro chips HTML — only real evaluated examples (no cross-vertical placeholders)
     intro_html = "".join(_chip(c) for c in intro_chips[:12])
     if not intro_html:
-        if show_neural:
-            intro_html = _chip("lipstick 5→101") + _chip("watches for women 44→100") + _chip("waterproof shoes 6→97") + _chip("perfumes for men 25→98")
-        else:
-            intro_html = _chip("lipstick · 5 results") + _chip("watches for women · 44 results") + _chip("waterproof shoes · 6 results") + _chip("perfumes for men · 25 results")
+        intro_html = (
+            '<span style="font-size: 13px; color: var(--grey-600);">'
+            "No clear before/after examples from live evaluation for this index.</span>"
+        )
 
     # Long tail chips (slide 3)
     long_tail_html = "".join(
@@ -119,47 +153,46 @@ def render_presentation(ctx: Dict[str, Any]) -> str:
         for q in long_tail[:12]
     )
     if not long_tail_html:
-        long_tail_html = '<span style="padding: 5px 10px; background: #f2f4ff; border: 1px solid #bbd1ff; border-radius: 4px; color: #23263b; font-size: 12px;">watches for women</span><span style="padding: 5px 10px; background: #f2f4ff; border: 1px solid #bbd1ff; border-radius: 4px; color: #23263b; font-size: 12px;">formal shoes for men</span><span style="padding: 5px 10px; background: #f2f4ff; border: 1px solid #bbd1ff; border-radius: 4px; color: #23263b; font-size: 12px;">waterproof shoes</span>'
+        long_tail_html = (
+            '<span style="font-size: 12px; color: var(--grey-600);">'
+            "No long-tail sample available from this customer's analytics.</span>"
+        )
+
+    empty_msg = (
+        "No strong live examples for this opportunity on this index. "
+        "We only surface queries backed by evaluation (not placeholder catalog terms)."
+    )
 
     # Tables
     thin_rows = "".join(_table_row_thin(r, show_neural=show_neural) for r in thin_results[:12])
     if not thin_rows:
-        if show_neural:
-            thin_rows = '<tr><td class="search-term">lipstick</td><td>5</td><td>101</td><td>2,780</td></tr><tr><td class="search-term">bath robe</td><td>6</td><td>96</td><td>1,647</td></tr><tr><td class="search-term">thermal leggings</td><td>3</td><td>101</td><td>1,076</td></tr>'
-        else:
-            thin_rows = '<tr><td class="search-term">lipstick</td><td>5</td><td>2,780</td></tr><tr><td class="search-term">bath robe</td><td>6</td><td>1,647</td></tr><tr><td class="search-term">thermal leggings</td><td>3</td><td>1,076</td></tr>'
+        thin_rows = _empty_table_row(show_neural, empty_msg)
 
     no_results_rows_html = "".join(_table_row_thin(r, show_neural=show_neural) for r in no_results_rows[:12])
     if not no_results_rows_html:
-        nc = 4 if show_neural else 3
-        no_results_rows_html = (
-            f'<tr><td colspan="{nc}" style="color: var(--grey-600); font-size: 13px;">'
+        no_results_rows_html = _empty_table_row(
+            show_neural,
             "No queries returned <strong>zero</strong> live search results in our evaluation. "
             "Your analytics may still report zero-hit queries from historical aggregates; "
-            "we only list queries that currently return 0 keyword hits.</td></tr>"
+            "we only list queries that currently return 0 keyword hits.",
         )
 
     nl_rows = "".join(_table_row_thin(r, show_neural=show_neural) for r in natural_language[:12])
     if not nl_rows:
-        if show_neural:
-            nl_rows = '<tr><td class="search-term">watches for women</td><td>44</td><td>118</td><td>17,600</td></tr><tr><td class="search-term">formal shoes for men</td><td>20</td><td>105</td><td>8,500</td></tr>'
-        else:
-            nl_rows = '<tr><td class="search-term">watches for women</td><td>44</td><td>17,600</td></tr><tr><td class="search-term">formal shoes for men</td><td>20</td><td>8,500</td></tr>'
+        nl_rows = _empty_table_row(show_neural, empty_msg)
 
     conc_rows = "".join(_table_row_thin(r, show_neural=show_neural) for r in conceptual[:12])
     if not conc_rows:
-        if show_neural:
-            conc_rows = '<tr><td class="search-term">waterproof shoes</td><td>6</td><td>97</td><td>1,444</td></tr><tr><td class="search-term">safety shoes for men</td><td>5</td><td>100</td><td>1,761</td></tr>'
-        else:
-            conc_rows = '<tr><td class="search-term">waterproof shoes</td><td>6</td><td>1,444</td></tr><tr><td class="search-term">safety shoes for men</td><td>5</td><td>1,761</td></tr>'
+        conc_rows = _empty_table_row(show_neural, empty_msg)
 
     rel_source = relevancy[:12] if relevancy else thin_results[:12]
     rel_rows = "".join(_table_row_relevancy(r, show_neural=show_neural) for r in rel_source)
     if not rel_rows:
-        if show_neural:
-            rel_rows = '<tr><td class="search-term">—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>'
-        else:
-            rel_rows = '<tr><td class="search-term">—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>'
+        rel_cols = 6 if show_neural else 5
+        rel_rows = (
+            f'<tr><td colspan="{rel_cols}" style="color: var(--grey-600); font-size: 13px;">'
+            f"{empty_msg}</td></tr>"
+        )
 
     # No results slide visual (0 → X)
     no_first = no_results_rows[0] if no_results_rows else {}
@@ -177,10 +210,23 @@ def render_presentation(ctx: Dict[str, Any]) -> str:
 
     # Revenue: Uplift = CVR delta × affected searches × AOV (CVR delta = baseline × measured relative uplift)
     baseline_cvr_dec = (avg_cvr / 100) if avg_cvr else 0
-    measured_relative_uplift = 0.025  # 2.5% relative CVR lift (from A/B tests)
+    measured_relative_uplift = MEASURED_RELATIVE_UPLIFT
+    lift_pct_str = f"{measured_relative_uplift * 100:.1f}".rstrip("0").rstrip(".")
     cvr_delta_dec = baseline_cvr_dec * measured_relative_uplift
     new_cvr_dec = baseline_cvr_dec + cvr_delta_dec
-    example_aov = 80
+    try:
+        example_aov = float(ctx.get("aov") if ctx.get("aov") is not None else DEFAULT_AOV)
+    except (TypeError, ValueError):
+        example_aov = float(DEFAULT_AOV)
+    if example_aov <= 0:
+        example_aov = float(DEFAULT_AOV)
+    example_aov_int = int(round(example_aov))
+    aov_source = ctx.get("aov_source") or "default"
+    aov_label = (
+        f"manual ${example_aov_int} AOV"
+        if aov_source == "manual"
+        else f"example: ${example_aov_int} AOV"
+    )
     rev_without = thin_searches * baseline_cvr_dec * example_aov
     rev_with = thin_searches * new_cvr_dec * example_aov
     uplift = int(thin_searches * cvr_delta_dec * example_aov)
@@ -192,7 +238,9 @@ def render_presentation(ctx: Dict[str, Any]) -> str:
     # Top 100 grid
     top100_spans = "".join(f'<span>{html.escape(str(q))}</span>' for q in top100[:100])
     if not top100_spans:
-        top100_spans = '<span>shoes for men</span><span>jacket for men</span><span>watches for women</span>'
+        top100_spans = (
+            '<span style="color: var(--grey-600);">No high-fit queries available from this analysis.</span>'
+        )
 
     if not multilingual:
         from .extract_top_queries import is_numeric_url_or_id as _inv
@@ -213,8 +261,16 @@ def render_presentation(ctx: Dict[str, Any]) -> str:
     with open(template_path, encoding="utf-8") as f:
         html_content = f.read()
 
-    # Logo / case-study assets: HTML is written under generated/ — use parent-relative paths
-    html_content = html_content.replace('src="logos/', 'src="../logos/')
+    # Embed logos as data URIs (portable HTML download + reliable PDF via file://)
+    logos_dir = app_dir / "logos"
+    html_content = _embed_logo_assets(html_content, logos_dir)
+
+    # Meta for view UI (auto-suggest omit revenue slide when uplift is $0)
+    html_content = html_content.replace(
+        "<head>",
+        f'<head>\n  <meta name="ns-uplift" content="{uplift}">\n  <meta name="ns-aov" content="{example_aov_int}">',
+        1,
+    )
 
     # ─── Customer name ───
     html_content = html_content.replace("<title>NeuralSearch — BFL Store</title>", f"<title>NeuralSearch — {html.escape(customer)}</title>", 1)
@@ -230,15 +286,20 @@ def render_presentation(ctx: Dict[str, Any]) -> str:
     new_cvr_pct = new_cvr_dec * 100
     revenue_formula_lines = (
         f"Revenue without NeuralSearch = baseline CVR × affected searches × AOV = "
-        f"{avg_cvr}% × {thin_searches:,} × ${example_aov} ≈ <strong>{rev_without_str}/mo</strong><br>"
+        f"{avg_cvr}% × {thin_searches:,} × ${example_aov_int} ≈ <strong>{rev_without_str}/mo</strong><br>"
         f"Revenue with NeuralSearch = new CVR × affected searches × AOV = "
-        f"{new_cvr_pct:.2f}% × {thin_searches:,} × ${example_aov} ≈ <strong>{rev_with_str}/mo</strong><br>"
-        f"Uplift = ΔCVR × affected searches × AOV — ΔCVR = baseline × 2.5% (relative) = +{pp_delta:.3f} pp"
+        f"{new_cvr_pct:.2f}% × {thin_searches:,} × ${example_aov_int} ≈ <strong>{rev_with_str}/mo</strong><br>"
+        f"Uplift = ΔCVR × affected searches × AOV — ΔCVR = baseline × {lift_pct_str}% (relative) = +{pp_delta:.3f} pp"
     )
     html_content = html_content.replace("<!--REVENUE_FORMULA_LINES-->", revenue_formula_lines, 1)
     html_content = html_content.replace(
         "<!--REVENUE_UPLIFT_EQUATION-->",
-        f"ΔCVR × {thin_searches_str} searches × AOV  &nbsp;·&nbsp;  ΔCVR = {avg_cvr}% × 2.5%",
+        f"ΔCVR × {thin_searches_str} searches × AOV  &nbsp;·&nbsp;  ΔCVR = {avg_cvr}% × {lift_pct_str}%",
+        1,
+    )
+    html_content = html_content.replace(
+        "Projected monthly uplift (example: $80 AOV)",
+        f"Projected monthly uplift ({aov_label})",
         1,
     )
 
@@ -485,19 +546,27 @@ def render_presentation(ctx: Dict[str, Any]) -> str:
         f'<span class="revenue-baseline-cvr">{avg_cvr}</span>',
         1
     )
-    aov50 = int(thin_searches * (avg_cvr / 100) * 0.025 * 50)
-    aov100 = int(thin_searches * (avg_cvr / 100) * 0.025 * 100)
+    aov50 = int(thin_searches * (avg_cvr / 100) * measured_relative_uplift * 50)
+    aov100 = int(thin_searches * (avg_cvr / 100) * measured_relative_uplift * 100)
     aov50_str = f"${aov50/1000:.0f}K" if aov50 >= 1000 else f"${aov50}"
     aov100_str = f"${aov100/1000:.0f}K" if aov100 >= 1000 else f"${aov100}"
+    scenario_line = f"$50 AOV → {aov50_str}/mo · $100 AOV → {aov100_str}/mo"
+    if aov_source == "manual":
+        scenario_line = f"Using ${example_aov_int} AOV · {scenario_line}"
     html_content = html_content.replace(
         '<p style="font-size: 12px; color: var(--grey-600); margin-top: 8px;">$50 AOV → $35K/mo · $100 AOV → $71K/mo</p>',
-        f'<p style="font-size: 12px; color: var(--grey-600); margin-top: 8px;">$50 AOV → {aov50_str}/mo · $100 AOV → {aov100_str}/mo</p>',
+        f'<p style="font-size: 12px; color: var(--grey-600); margin-top: 8px;">{scenario_line}</p>',
         1
     )
     html_content = html_content.replace(
         "674K searches a month",
         f"{thin_searches_str} searches a month",
         1
+    )
+    html_content = html_content.replace(
+        "A 2.9% CVR uplift from measured A/B tests",
+        f"A {lift_pct_str}% CVR uplift from measured A/B tests",
+        1,
     )
 
     # ─── Top 100 query grid ───

@@ -496,7 +496,7 @@
     .metric-badge .metric-value { font-size: 18px; font-weight: 800; line-height: 1.1; letter-spacing: -0.02em; }
     .metric-badge .metric-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.95; }
 
-    /* ══ Print — deck-ready PDF ══ */
+    /* ══ Print — deck-ready PDF (16:9) ══ */
     @media print {
       @page {
         size: 11in 6.1875in;
@@ -525,7 +525,12 @@
         padding: 56px 56px 72px;
         padding-top: 104px;
       }
-      .slide:last-of-type { page-break-after: auto; }
+      .slide.slide-omitted {
+        display: none !important;
+        page-break-after: auto !important;
+        page-break-before: auto !important;
+      }
+      .slide:not(.slide-omitted):last-of-type { page-break-after: auto; }
       .deck-controls { display: none !important; }
     }
   </style>
@@ -845,7 +850,7 @@
           <p style="font-size: 11px; font-weight: 700; color: var(--grey-500); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em;">Your inputs</p>
           <p style="font-size: 13px; margin: 0 0 6px;"><strong><span class="revenue-thin-searches">674,000</span></strong> eligible searches/mo</p>
           <p style="font-size: 13px; margin: 0 0 6px;"><strong><span class="revenue-baseline-cvr">4.2</span>%</strong> baseline CVR</p>
-          <p style="font-size: 13px; margin: 0;"><strong>2.5%</strong> CVR uplift (measured)</p>
+          <p style="font-size: 13px; margin: 0;"><strong>2.9%</strong> CVR uplift (measured)</p>
         </div>
         <div style="padding: 18px 20px; background: var(--xenon-100); border-radius: 10px; border: 1px solid var(--xenon-200);">
           <p style="font-size: 11px; font-weight: 700; color: var(--xenon-700); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em;">Plug in your AOV</p>
@@ -854,7 +859,7 @@
         </div>
       </div>
     </div>
-    <div class="talk-track">This is real. 674K searches a month hitting thin results. A 2.5% CVR uplift from measured A/B tests. Plug in your AOV — the number gets big fast. This is why we're here.</div>
+    <div class="talk-track">This is real. 674K searches a month hitting thin results. A 2.9% CVR uplift from measured A/B tests. Plug in your AOV — the number gets big fast. This is why we're here.</div>
   </div>
 
   <!-- ══════════════════════════════════════════
@@ -1238,28 +1243,67 @@
   </div>
 
   <script>
-    let n = 1;
-    const total = 20;
+    const ALL_SLIDES = 20;
     const prevBtn = document.getElementById('deckPrev');
     const nextBtn = document.getElementById('deckNext');
+    let active = [];
+    let idx = 0;
+
+    function parseOmitList() {
+      const fromWindow = Array.isArray(window.__OMITTED_SLIDES__) ? window.__OMITTED_SLIDES__ : [];
+      const params = new URLSearchParams(window.location.search);
+      const fromUrl = (params.get('omit') || '')
+        .split(',')
+        .map(function (s) { return parseInt(s.trim(), 10); })
+        .filter(function (n) { return n >= 1 && n <= ALL_SLIDES; });
+      return new Set(fromWindow.concat(fromUrl));
+    }
+
+    function applyOmit(extraOmit) {
+      const omitted = parseOmitList();
+      if (Array.isArray(extraOmit)) {
+        extraOmit.forEach(function (n) { omitted.add(n); });
+      }
+      document.querySelectorAll('.slide').forEach(function (s, i) {
+        const num = i + 1;
+        if (omitted.has(num)) s.classList.add('slide-omitted');
+        else s.classList.remove('slide-omitted');
+      });
+      active = [];
+      for (let n = 1; n <= ALL_SLIDES; n++) {
+        if (!omitted.has(n)) active.push(n);
+      }
+      if (!active.length) {
+        for (let n = 1; n <= ALL_SLIDES; n++) active.push(n);
+        document.querySelectorAll('.slide').forEach(function (s) { s.classList.remove('slide-omitted'); });
+      }
+      idx = 0;
+      show();
+      return Array.from(omitted);
+    }
 
     function show() {
-      document.querySelectorAll('.slide').forEach((s, i) => { s.style.display = i + 1 === n ? 'block' : 'none'; });
-      document.getElementById('slideNum').textContent = n + ' of ' + total;
-      prevBtn.disabled = n <= 1;
-      nextBtn.disabled = n >= total;
+      const current = active[idx] || 1;
+      document.querySelectorAll('.slide').forEach(function (s, i) {
+        const num = i + 1;
+        const isOmitted = s.classList.contains('slide-omitted');
+        s.style.display = (!isOmitted && num === current) ? 'block' : 'none';
+      });
+      document.getElementById('slideNum').textContent = (idx + 1) + ' of ' + active.length;
+      prevBtn.disabled = idx <= 0;
+      nextBtn.disabled = idx >= active.length - 1;
     }
 
     prevBtn.addEventListener('click', function (e) {
       e.preventDefault();
       e.stopPropagation();
-      n = Math.max(n - 1, 1);
+      idx = Math.max(idx - 1, 0);
       show();
     });
     nextBtn.addEventListener('click', function (e) {
       e.preventDefault();
       e.stopPropagation();
-      n = Math.min(n + 1, total);
+      idx = Math.min(idx + 1, active.length - 1);
       show();
     });
 
@@ -1268,15 +1312,13 @@
       var sel = window.getSelection();
       if (sel && !sel.isCollapsed) return;
       e.preventDefault();
-      if (e.key === 'ArrowRight') {
-        n = Math.min(n + 1, total);
-      } else {
-        n = Math.max(n - 1, 1);
-      }
+      if (e.key === 'ArrowRight') idx = Math.min(idx + 1, active.length - 1);
+      else idx = Math.max(idx - 1, 0);
       show();
     });
 
-    show();
+    window.applyOmit = applyOmit;
+    applyOmit();
   </script>
 </body>
 </html>
