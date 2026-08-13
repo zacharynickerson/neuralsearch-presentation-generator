@@ -18,15 +18,47 @@ DEFAULT_AOV = 80
 
 
 def _chip(text: str) -> str:
-    return f'<span style="padding: 5px 10px; background: #f2f4ff; border: 1px solid #bbd1ff; border-radius: 4px; color: #23263b; font-size: 13px;">{html.escape(text)}</span>'
+    return f"<span>{html.escape(text)}</span>"
 
 
-def _empty_table_row(show_neural: bool, message: str) -> str:
+def _empty_state(title: str, message: str) -> str:
+    return (
+        f'<div class="empty-state">'
+        f'<div class="empty-state-label">{html.escape(title)}</div>'
+        f"<p>{message}</p>"
+        f"</div>"
+    )
+
+
+def _empty_table_row(show_neural: bool, title: str, message: str) -> str:
     cols = 4 if show_neural else 3
     return (
-        f'<tr><td colspan="{cols}" style="color: var(--grey-600); font-size: 13px;">'
-        f"{message}</td></tr>"
+        f'<tr><td colspan="{cols}" style="padding: 0; border: none; background: transparent;">'
+        f"{_empty_state(title, message)}"
+        f"</td></tr>"
     )
+
+
+def _inject_default_omit(html_content: str, omit: list) -> str:
+    """Bake suggested omits into generated HTML so weak slides stay out of customer exports."""
+    if not omit:
+        return html_content
+    omit_json = "[" + ", ".join(str(n) for n in omit) + "]"
+    snippet = (
+        f"<!--NS_OMIT_INJECT-->"
+        f"<script>window.__OMITTED_SLIDES__={omit_json};</script>\n"
+    )
+    if "<!--NS_OMIT_INJECT-->" in html_content:
+        return re.sub(
+            r"<!--NS_OMIT_INJECT--><script>window\.__OMITTED_SLIDES__=.*?</script>\s*",
+            snippet,
+            html_content,
+            count=1,
+            flags=re.DOTALL,
+        )
+    if "</head>" in html_content:
+        return html_content.replace("</head>", snippet + "</head>", 1)
+    return snippet + html_content
 
 
 def _embed_logo_assets(html_content: str, logos_dir: Path) -> str:
@@ -56,42 +88,44 @@ def _table_row_thin(r: dict, *, show_neural: bool) -> str:
     cnt = r.get("count", 0)
     cnt_str = f"{cnt:,}" if cnt else "—"
     if show_neural:
-        return f'<tr><td class="search-term">{q}</td><td>{wo}</td><td>{w}</td><td>{cnt_str}</td></tr>'
+        w_cell = f'<td class="delta-up">{w}</td>' if (w or 0) > (wo or 0) else f"<td>{w}</td>"
+        return f'<tr><td class="search-term">{q}</td><td>{wo}</td>{w_cell}<td>{cnt_str}</td></tr>'
     return f'<tr><td class="search-term">{q}</td><td>{wo}</td><td>{cnt_str}</td></tr>'
 
 
 def _ml_chip(q: str) -> str:
-    return (
-        f'<span style="padding: 5px 10px; background: #f2f4ff; border: 1px solid #bbd1ff; '
-        f'border-radius: 4px; color: #23263b; font-size: 12px;">{html.escape(str(q))}</span>'
-    )
+    return f"<span>{html.escape(str(q))}</span>"
 
 
 def _build_multilingual_grid(ml: Dict[str, Any]) -> str:
     """Inner HTML for slide 17 (grid + optional second column)."""
-    col1 = "".join(_ml_chip(q) for q in ml.get("col1_queries") or [])
-    if not col1:
-        col1 = '<span style="font-size: 12px; color: var(--grey-500);">—</span>'
+    col1_qs = ml.get("col1_queries") or []
+    col2_qs = ml.get("col2_queries") or []
+    if not col1_qs and not col2_qs:
+        return _empty_state(
+            "No multilingual signal",
+            "This index’s recent top queries look primarily monolingual. "
+            "We can still cover NeuralSearch’s multilingual capability in conversation without a weak sample slide.",
+        )
+    col1 = "".join(_ml_chip(q) for q in col1_qs)
     t1 = html.escape(ml.get("col1_title") or "Queries (your data)")
     if ml.get("mode") == "single" or not ml.get("col2_title"):
         return f"""    <div style="display: grid; grid-template-columns: 1fr; gap: 16px; margin: 20px 0;">
-      <div style="padding: 20px 24px; background: var(--grey-000); border-radius: 8px; border: 1px solid var(--grey-200); box-shadow: 0 1px 2px rgba(35,38,59,0.04);">
-        <p style="font-size: 11pt; color: var(--algolia-muted); margin-bottom: 12px;">{t1}</p>
-        <div style="display: flex; flex-wrap: wrap; gap: 8px 10px;">{col1}</div>
+      <div style="padding: 20px 24px; background: linear-gradient(180deg,#fff,#f7f8fd); border-radius: 14px; border: 1px solid var(--grey-200); box-shadow: 0 2px 10px rgba(21,24,43,0.05);">
+        <p style="font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--algolia-muted); margin-bottom: 12px;">{t1}</p>
+        <div class="long-tail-chips" style="display: flex; flex-wrap: wrap; gap: 8px 10px;">{col1}</div>
       </div>
     </div>"""
-    col2 = "".join(_ml_chip(q) for q in ml.get("col2_queries") or [])
-    if not col2:
-        col2 = '<span style="font-size: 12px; color: var(--grey-500);">—</span>'
+    col2 = "".join(_ml_chip(q) for q in col2_qs)
     t2 = html.escape(ml.get("col2_title") or "")
     return f"""    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0;">
-      <div style="padding: 20px 24px; background: var(--grey-000); border-radius: 8px; border: 1px solid var(--grey-200); box-shadow: 0 1px 2px rgba(35,38,59,0.04);">
-        <p style="font-size: 11pt; color: var(--algolia-muted); margin-bottom: 12px;">{t1}</p>
-        <div style="display: flex; flex-wrap: wrap; gap: 8px 10px;">{col1}</div>
+      <div style="padding: 20px 24px; background: linear-gradient(180deg,#fff,#f7f8fd); border-radius: 14px; border: 1px solid var(--grey-200); box-shadow: 0 2px 10px rgba(21,24,43,0.05);">
+        <p style="font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--algolia-muted); margin-bottom: 12px;">{t1}</p>
+        <div class="long-tail-chips" style="display: flex; flex-wrap: wrap; gap: 8px 10px;">{col1}</div>
       </div>
-      <div style="padding: 20px 24px; background: var(--grey-000); border-radius: 8px; border: 1px solid var(--grey-200); box-shadow: 0 1px 2px rgba(35,38,59,0.04);">
-        <p style="font-size: 11pt; color: var(--algolia-muted); margin-bottom: 12px;">{t2}</p>
-        <div style="display: flex; flex-wrap: wrap; gap: 8px 10px;">{col2}</div>
+      <div style="padding: 20px 24px; background: linear-gradient(180deg,#fff,#f7f8fd); border-radius: 14px; border: 1px solid var(--grey-200); box-shadow: 0 2px 10px rgba(21,24,43,0.05);">
+        <p style="font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--algolia-muted); margin-bottom: 12px;">{t2}</p>
+        <div class="long-tail-chips" style="display: flex; flex-wrap: wrap; gap: 8px 10px;">{col2}</div>
       </div>
     </div>"""
 
@@ -107,7 +141,8 @@ def _table_row_relevancy(r: dict, *, show_neural: bool) -> str:
     cr_pct = f"{cr * 100:.1f}%" if isinstance(cr, (int, float)) else "—"
     cnt_str = f"{cnt:,}" if cnt else "—"
     if show_neural:
-        return f'<tr><td class="search-term">{q}</td><td>{wo}</td><td>{w}</td><td>{ctr_pct}</td><td>{cr_pct}</td><td>{cnt_str}</td></tr>'
+        w_cell = f'<td class="delta-up">{w}</td>' if (w or 0) > (wo or 0) else f"<td>{w}</td>"
+        return f'<tr><td class="search-term">{q}</td><td>{wo}</td>{w_cell}<td>{ctr_pct}</td><td>{cr_pct}</td><td>{cnt_str}</td></tr>'
     return f'<tr><td class="search-term">{q}</td><td>{wo}</td><td>{ctr_pct}</td><td>{cr_pct}</td><td>{cnt_str}</td></tr>'
 
 
@@ -139,59 +174,63 @@ def render_presentation(ctx: Dict[str, Any]) -> str:
     monthly_str = f"~{total_monthly / 1e6:.1f}M" if total_monthly >= 1e6 else f"~{int(total_monthly):,}"
     thin_searches_str = f"{thin_searches/1000:.0f}K" if thin_searches >= 1000 else f"{thin_searches:,}"
 
-    # Build intro chips HTML — only real evaluated examples (no cross-vertical placeholders)
+    # Intro chips — real evidence only; fall back to clean metric chips (never apology copy)
     intro_html = "".join(_chip(c) for c in intro_chips[:12])
     if not intro_html:
-        intro_html = (
-            '<span style="font-size: 13px; color: var(--grey-600);">'
-            "No clear before/after examples from live evaluation for this index.</span>"
+        intro_html = "".join(
+            _chip(c)
+            for c in [
+                f"{thin_searches_str} thin searches/mo",
+                f"{thin_rate}% thin-result rate",
+                f"{avg_cvr}% baseline CVR",
+                f"{monthly_str} monthly searches",
+            ]
         )
 
     # Long tail chips (slide 3)
-    long_tail_html = "".join(
-        f'<span style="padding: 5px 10px; background: #f2f4ff; border: 1px solid #bbd1ff; border-radius: 4px; color: #23263b; font-size: 12px;">{html.escape(str(q))}</span>'
-        for q in long_tail[:12]
-    )
+    long_tail_html = "".join(_chip(str(q)) for q in long_tail[:12])
     if not long_tail_html:
-        long_tail_html = (
-            '<span style="font-size: 12px; color: var(--grey-600);">'
-            "No long-tail sample available from this customer's analytics.</span>"
+        long_tail_html = _empty_state(
+            "Long-tail sample unavailable",
+            "We’ll still frame the long-tail opportunity conceptually — unique phrases and intent queries that keyword matching often misses.",
         )
 
+    empty_title = "Not a primary signal here"
     empty_msg = (
-        "No strong live examples for this opportunity on this index. "
-        "We only surface queries backed by evaluation (not placeholder catalog terms)."
+        "We didn’t find strong live examples for this opportunity on this index. "
+        "Skip this slide in the customer conversation and lean on opportunities with proof."
     )
 
     # Tables
     thin_rows = "".join(_table_row_thin(r, show_neural=show_neural) for r in thin_results[:12])
     if not thin_rows:
-        thin_rows = _empty_table_row(show_neural, empty_msg)
+        thin_rows = _empty_table_row(show_neural, empty_title, empty_msg)
 
     no_results_rows_html = "".join(_table_row_thin(r, show_neural=show_neural) for r in no_results_rows[:12])
     if not no_results_rows_html:
         no_results_rows_html = _empty_table_row(
             show_neural,
-            "No queries returned <strong>zero</strong> live search results in our evaluation. "
-            "Your analytics may still report zero-hit queries from historical aggregates; "
-            "we only list queries that currently return 0 keyword hits.",
+            "No live zero-result queries",
+            "Live keyword search didn’t return current zero-hit examples. "
+            "Historical analytics may still show no-result traffic — treat this as a secondary talking point.",
         )
 
     nl_rows = "".join(_table_row_thin(r, show_neural=show_neural) for r in natural_language[:12])
     if not nl_rows:
-        nl_rows = _empty_table_row(show_neural, empty_msg)
+        nl_rows = _empty_table_row(show_neural, empty_title, empty_msg)
 
     conc_rows = "".join(_table_row_thin(r, show_neural=show_neural) for r in conceptual[:12])
     if not conc_rows:
-        conc_rows = _empty_table_row(show_neural, empty_msg)
+        conc_rows = _empty_table_row(show_neural, empty_title, empty_msg)
 
     rel_source = relevancy[:12] if relevancy else thin_results[:12]
     rel_rows = "".join(_table_row_relevancy(r, show_neural=show_neural) for r in rel_source)
     if not rel_rows:
         rel_cols = 6 if show_neural else 5
         rel_rows = (
-            f'<tr><td colspan="{rel_cols}" style="color: var(--grey-600); font-size: 13px;">'
-            f"{empty_msg}</td></tr>"
+            f'<tr><td colspan="{rel_cols}" style="padding: 0; border: none; background: transparent;">'
+            f"{_empty_state(empty_title, empty_msg)}"
+            f"</td></tr>"
         )
 
     # No results slide visual (0 → X)
@@ -234,12 +273,16 @@ def render_presentation(ctx: Dict[str, Any]) -> str:
     annual_str = f"≈ ${uplift * 12:,} annually" if uplift >= 1000 else f"≈ ${uplift * 12} annually"
     rev_without_str = f"${int(rev_without):,}" if rev_without >= 1000 else f"${int(rev_without)}"
     rev_with_str = f"${int(rev_with):,}" if rev_with >= 1000 else f"${int(rev_with)}"
+    revenue_weak = uplift <= 0 or thin_searches <= 0 or avg_cvr <= 0
 
     # Top 100 grid
-    top100_spans = "".join(f'<span>{html.escape(str(q))}</span>' for q in top100[:100])
+    top100_spans = "".join(f"<span>{html.escape(str(q))}</span>" for q in top100[:100])
     if not top100_spans:
         top100_spans = (
-            '<span style="color: var(--grey-600);">No high-fit queries available from this analysis.</span>'
+            '<div class="empty-state" style="grid-column: 1 / -1;">'
+            '<div class="empty-state-label">Query list unavailable</div>'
+            "<p>We’ll pull a high-fit query list in follow-up — this slide isn’t needed for the core story.</p>"
+            "</div>"
         )
 
     if not multilingual:
@@ -265,10 +308,41 @@ def render_presentation(ctx: Dict[str, Any]) -> str:
     logos_dir = app_dir / "logos"
     html_content = _embed_logo_assets(html_content, logos_dir)
 
-    # Meta for view UI (auto-suggest omit revenue slide when uplift is $0)
+    # Suggest omitting weak/empty slides so customer decks stay polished
+    suggest_omit = []
+    if not thin_results:
+        suggest_omit.append(4)
+    if not no_results_rows:
+        suggest_omit.append(5)
+    if not natural_language:
+        suggest_omit.append(6)
+    if not conceptual:
+        suggest_omit.append(7)
+    if not rel_source:
+        suggest_omit.append(8)
+    if revenue_weak:
+        suggest_omit.append(9)
+    ml_empty = not (multilingual.get("col1_queries") or multilingual.get("col2_queries"))
+    if ml_empty:
+        suggest_omit.append(17)
+        multilingual = {
+            **multilingual,
+            "benefit": "NeuralSearch supports 50+ languages on one index — useful when international traffic grows.",
+            "footnote": "No strong second-language sample appeared in this index’s recent top queries.",
+            "talk_track": "Keep this brief: multilingual is available out of the box. If this account is monolingual today, don’t over-index on the sample — focus on opportunities with live proof.",
+        }
+    if not top100:
+        suggest_omit.append(19)
+    suggest_omit = sorted(set(suggest_omit))
+
+    # Meta for view UI
     html_content = html_content.replace(
         "<head>",
-        f'<head>\n  <meta name="ns-uplift" content="{uplift}">\n  <meta name="ns-aov" content="{example_aov_int}">',
+        (
+            f'<head>\n  <meta name="ns-uplift" content="{uplift}">\n'
+            f'  <meta name="ns-aov" content="{example_aov_int}">\n'
+            f'  <meta name="ns-suggest-omit" content="{",".join(str(n) for n in suggest_omit)}">'
+        ),
         1,
     )
 
@@ -284,13 +358,19 @@ def render_presentation(ctx: Dict[str, Any]) -> str:
 
     pp_delta = cvr_delta_dec * 100
     new_cvr_pct = new_cvr_dec * 100
-    revenue_formula_lines = (
-        f"Revenue without NeuralSearch = baseline CVR × affected searches × AOV = "
-        f"{avg_cvr}% × {thin_searches:,} × ${example_aov_int} ≈ <strong>{rev_without_str}/mo</strong><br>"
-        f"Revenue with NeuralSearch = new CVR × affected searches × AOV = "
-        f"{new_cvr_pct:.2f}% × {thin_searches:,} × ${example_aov_int} ≈ <strong>{rev_with_str}/mo</strong><br>"
-        f"Uplift = ΔCVR × affected searches × AOV — ΔCVR = baseline × {lift_pct_str}% (relative) = +{pp_delta:.3f} pp"
-    )
+    if revenue_weak:
+        revenue_formula_lines = (
+            "Projected uplift needs eligible thin-result searches, a baseline CVR, and an AOV. "
+            "Enter AOV on generate when purchase events aren’t in Algolia analytics."
+        )
+    else:
+        revenue_formula_lines = (
+            f"Revenue without NeuralSearch = baseline CVR × affected searches × AOV = "
+            f"{avg_cvr}% × {thin_searches:,} × ${example_aov_int} ≈ <strong>{rev_without_str}/mo</strong><br>"
+            f"Revenue with NeuralSearch = new CVR × affected searches × AOV = "
+            f"{new_cvr_pct:.2f}% × {thin_searches:,} × ${example_aov_int} ≈ <strong>{rev_with_str}/mo</strong><br>"
+            f"Uplift = ΔCVR × affected searches × AOV — ΔCVR = baseline × {lift_pct_str}% (relative) = +{pp_delta:.3f} pp"
+        )
     html_content = html_content.replace("<!--REVENUE_FORMULA_LINES-->", revenue_formula_lines, 1)
     html_content = html_content.replace(
         "<!--REVENUE_UPLIFT_EQUATION-->",
@@ -446,7 +526,7 @@ def render_presentation(ctx: Dict[str, Any]) -> str:
 
     # ─── Slide 1 — Intro chips ───
     html_content = re.sub(
-        r'(<div class="intro-chips" style="display: flex; flex-wrap: wrap; gap: 8px 12px; margin-top: 16px; font-size: 12pt;">)(.*?)(</div>\s*<div class="talk-track">)',
+        r'(<div class="intro-chips"[^>]*>)(.*?)(</div>\s*<div class="talk-track">)',
         r'\1' + intro_html + r'\3',
         html_content,
         count=1,
@@ -531,11 +611,28 @@ def render_presentation(ctx: Dict[str, Any]) -> str:
     )
 
     # ─── Slide 9 — Revenue impact ───
-    html_content = html_content.replace(
-        '<p style="font-size: 48px; font-weight: 800; margin: 0; letter-spacing: -0.02em; line-height: 1; color: white;">$57,000</p>\n        <p style="font-size: 14px; margin: 8px 0 0; color: white;">≈ $684K annually</p>',
-        f'<p style="font-size: 48px; font-weight: 800; margin: 0; letter-spacing: -0.02em; line-height: 1; color: white;">{uplift_str}</p>\n        <p style="font-size: 14px; margin: 8px 0 0; color: white;">{annual_str}</p>',
-        1
-    )
+    if revenue_weak:
+        html_content = html_content.replace(
+            'class="revenue-hero" id="revenueHero"',
+            'class="revenue-hero revenue-weak" id="revenueHero"',
+            1,
+        )
+        html_content = html_content.replace(
+            'id="revenueUpliftValue" style="font-family: Outfit, DM Sans, sans-serif; font-size: 52px; font-weight: 800; margin: 0; letter-spacing: -0.03em; line-height: 1; color: white;">$57,000</p>\n        <p id="revenueAnnualValue" style="font-size: 15px; margin: 10px 0 0; color: rgba(255,255,255,0.92);">≈ $684K annually</p>',
+            (
+                'id="revenueUpliftValue" style="font-family: Outfit, DM Sans, sans-serif; font-size: 34px; font-weight: 800; margin: 0; letter-spacing: -0.03em; line-height: 1.15; color: white;">'
+                "Need AOV + conversion inputs</p>\n"
+                '        <p id="revenueAnnualValue" style="font-size: 14px; margin: 10px 0 0; color: rgba(255,255,255,0.92);">'
+                "Re-run with a manual AOV (or ensure conversion analytics are present) to size the opportunity.</p>"
+            ),
+            1,
+        )
+    else:
+        html_content = html_content.replace(
+            'id="revenueUpliftValue" style="font-family: Outfit, DM Sans, sans-serif; font-size: 52px; font-weight: 800; margin: 0; letter-spacing: -0.03em; line-height: 1; color: white;">$57,000</p>\n        <p id="revenueAnnualValue" style="font-size: 15px; margin: 10px 0 0; color: rgba(255,255,255,0.92);">≈ $684K annually</p>',
+            f'id="revenueUpliftValue" style="font-family: Outfit, DM Sans, sans-serif; font-size: 52px; font-weight: 800; margin: 0; letter-spacing: -0.03em; line-height: 1; color: white;">{uplift_str}</p>\n        <p id="revenueAnnualValue" style="font-size: 15px; margin: 10px 0 0; color: rgba(255,255,255,0.92);">{annual_str}</p>',
+            1,
+        )
     html_content = html_content.replace(
         '<span class="revenue-thin-searches">674,000</span>',
         f'<span class="revenue-thin-searches">{thin_searches:,}</span>',
@@ -569,6 +666,38 @@ def render_presentation(ctx: Dict[str, Any]) -> str:
         1,
     )
 
+    # Soften BFL-specific talk tracks that leak into other customer decks
+    html_content = html_content.replace(
+        "You have the inventory — lipstick, bath robes, thermal leggings, tweed — but keyword search only surfaces a handful.",
+        "You have the inventory — but keyword search only surfaces a handful of products for high-intent queries.",
+        1,
+    )
+    html_content = html_content.replace(
+        'Shoppers don\'t search like your catalog. They type "watches for women" or "formal shoes for men" — natural phrases.',
+        "Shoppers don’t search like your catalog. They type natural phrases and modifiers — not attribute-perfect keywords.",
+        1,
+    )
+    html_content = html_content.replace(
+        '17,600 searches for "watches for women" alone. This is the natural language benefit — shoppers search the way they talk, and NeuralSearch gets it.',
+        "This is the natural language benefit — shoppers search the way they talk, and NeuralSearch gets it.",
+        1,
+    )
+    html_content = html_content.replace(
+        'Keyword search can\'t connect concepts. "Waterproof shoes" won\'t match "Rain Cover" or "Snow Boot" — those words aren\'t in the query. NeuralSearch understands semantics and surfaces the right products: rain covers, snow boots, Safety Jogger shoes, diaper bags.',
+        "Keyword search can’t connect concepts when the catalog wording doesn’t match the query. NeuralSearch understands semantics and surfaces the right products even when the words differ.",
+        1,
+    )
+    html_content = html_content.replace(
+        'High volume + few results means the right products are buried. "Perfumes for men" — 12,000 searches, only 25 results shown. "Wallet for men" — 8,745 searches, 42 results. NeuralSearch surfaces more <strong>relevant</strong> options.',
+        "High volume + few results means the right products are buried. NeuralSearch surfaces more <strong>relevant</strong> options on those high-intent queries.",
+        1,
+    )
+    html_content = html_content.replace(
+        "Example use cases: thin results (lipstick, bath robe), natural language (watches for women), conceptual (waterproof shoes), relevancy (perfumes for men), typos (addidas→adidas), synonyms (cologne→perfume)",
+        "Example use cases: thin results, natural language, conceptual queries, relevancy gaps, typos, and synonyms — without maintaining brittle keyword maps.",
+        1,
+    )
+
     # ─── Top 100 query grid ───
     html_content = re.sub(
         r'(<div class="query-grid">)(.*?)(</div>)',
@@ -577,5 +706,8 @@ def render_presentation(ctx: Dict[str, Any]) -> str:
         count=1,
         flags=re.DOTALL
     )
+
+    # Bake suggested omits into the file so shared HTML/PDF skip weak slides by default
+    html_content = _inject_default_omit(html_content, suggest_omit)
 
     return html_content

@@ -82,6 +82,7 @@ def _load_presentation_index():
                 "customer": meta.get("customer", "NeuralSearch"),
                 "created_at": meta.get("created_at"),
                 "uplift": meta.get("uplift", 0),
+                "suggest_omit": meta.get("suggest_omit") or [],
             }
 
 
@@ -94,6 +95,7 @@ def _save_presentation_index():
             "customer": meta.get("customer", "NeuralSearch"),
             "created_at": meta.get("created_at"),
             "uplift": meta.get("uplift", 0),
+            "suggest_omit": meta.get("suggest_omit") or [],
         }
     INDEX_PATH.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
@@ -392,11 +394,17 @@ def _run_generation(job_id: str, **kwargs):
         out_path = OUTPUT_DIR / f"presentation_{pid}.html"
         out_path.write_text(result["html"], encoding="utf-8")
         ctx = result.get("context") or {}
+        # Pull suggested omit list from rendered meta when available
+        suggest_omit = []
+        m = re.search(r'<meta name="ns-suggest-omit" content="([^"]*)"', result["html"])
+        if m and m.group(1).strip():
+            suggest_omit = _parse_omit(m.group(1))
         presentations[pid] = {
             "path": str(out_path),
             "customer": kwargs["customer_name"],
             "created_at": datetime.now(timezone.utc).isoformat(),
             "uplift": int(ctx.get("uplift") or 0),
+            "suggest_omit": suggest_omit,
         }
         _save_presentation_index()
         jobs[job_id] = {"status": "done", "pid": pid}
@@ -551,11 +559,22 @@ def view(pid):
     if uplift is None:
         uplift = _read_uplift_from_html(Path(meta["path"]))
         meta["uplift"] = uplift
+    suggest_omit = meta.get("suggest_omit") or []
+    if not suggest_omit:
+        try:
+            head = Path(meta["path"]).read_text(encoding="utf-8", errors="ignore")[:5000]
+            m = re.search(r'<meta name="ns-suggest-omit" content="([^"]*)"', head)
+            if m and m.group(1).strip():
+                suggest_omit = _parse_omit(m.group(1))
+                meta["suggest_omit"] = suggest_omit
+        except OSError:
+            pass
     return render_template_string(
         VIEW_HTML,
         pid=pid,
         customer=meta.get("customer", ""),
         uplift=uplift or 0,
+        suggest_omit=suggest_omit,
         slides=SLIDE_TITLES,
     )
 
@@ -780,6 +799,7 @@ VIEW_HTML = """
   <script>
     const pid = {{ pid|tojson }};
     const uplift = {{ uplift|tojson }};
+    const suggestOmit = {{ suggest_omit|tojson }};
     const slides = {{ slides|tojson }};
     const storageKey = "ns_omit_" + pid;
     const frame = document.getElementById("deckFrame");
@@ -791,9 +811,9 @@ VIEW_HTML = """
     function loadOmit() {
       try {
         const raw = localStorage.getItem(storageKey);
-        if (!raw) return [];
+        if (!raw) return null;
         return JSON.parse(raw).filter(function (n) { return n >= 1 && n <= 20; });
-      } catch (e) { return []; }
+      } catch (e) { return null; }
     }
 
     function saveOmit(omit) {
@@ -829,20 +849,23 @@ VIEW_HTML = """
         input.value = String(num);
         input.checked = !omitSet.has(num);
         label.appendChild(input);
-        label.appendChild(document.createTextNode(" " + num + ". " + title));
+        const weak = Array.isArray(suggestOmit) && suggestOmit.indexOf(num) >= 0;
+        label.appendChild(document.createTextNode(" " + num + ". " + title + (weak ? " (weak evidence)" : "")));
         checksHost.appendChild(label);
       });
     }
 
     let omit = loadOmit();
-    if (!omit.length && Number(uplift) === 0) {
-      omit = [9];
+    if (omit === null) {
+      omit = Array.isArray(suggestOmit) ? suggestOmit.slice() : [];
+      if (!omit.length && Number(uplift) === 0) omit = [9];
       saveOmit(omit);
+    }
+    if ((Array.isArray(suggestOmit) && suggestOmit.length) || Number(uplift) === 0) {
       document.getElementById("zeroBanner").classList.add("show");
       document.body.classList.add("has-banner");
-    } else if (Number(uplift) === 0) {
-      document.getElementById("zeroBanner").classList.add("show");
-      document.body.classList.add("has-banner");
+      document.getElementById("zeroBanner").textContent =
+        "Weak or empty slides were auto-hidden for a cleaner customer deck. Use Customize slides to restore any.";
     }
 
     renderChecks(omit);
