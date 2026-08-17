@@ -594,30 +594,49 @@
       @page { size: 11in 6.1875in; margin: 0; }
       html, body {
         padding: 0; margin: 0; background: white;
+        width: 11in;
         -webkit-print-color-adjust: exact; print-color-adjust: exact;
       }
-      .deck-header { position: fixed; top: 0; left: 0; right: 0; z-index: 9999; backdrop-filter: none; background: #fff; }
+      .deck-header {
+        position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
+        backdrop-filter: none; background: #fff;
+      }
       .progress-rail, .deck-controls, .talk-track { display: none !important; }
       .slide {
         display: block !important;
+        box-sizing: border-box;
+        width: 11in;
+        max-width: 11in;
+        height: 6.1875in;
+        min-height: 6.1875in;
+        max-height: 6.1875in;
+        margin: 0;
+        overflow: hidden;
         page-break-after: always;
+        break-after: page;
         page-break-inside: avoid;
-        max-height: none;
-        min-height: 1080px;
-        padding: 56px 56px 72px;
-        padding-top: 104px;
+        break-inside: avoid;
+        padding: 68px 40px 36px;
         border-radius: 0;
         box-shadow: none;
         border: none;
         animation: none;
       }
-      .slide.cover-slide { padding-top: 104px; }
+      .slide.cover-slide { padding-top: 68px; }
       .slide.slide-omitted {
         display: none !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        max-height: 0 !important;
+        overflow: hidden !important;
         page-break-after: auto !important;
         page-break-before: auto !important;
+        break-after: auto !important;
       }
-      .slide:not(.slide-omitted):last-of-type { page-break-after: auto; }
+      .slide:not(.slide-omitted):last-of-type {
+        page-break-after: auto;
+        break-after: auto;
+      }
     }
   </style>
 </head>

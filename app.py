@@ -4,6 +4,7 @@ NeuralSearch Presentation Generator — Flask app.
 Sales reps enter customer details and Algolia credentials, then generate a custom presentation.
 """
 
+import base64
 import json
 import os
 import re
@@ -620,9 +621,106 @@ def download(pid):
     return send_file(path, as_attachment=True, download_name=f"NeuralSearch_{safe_name}.html")
 
 
+def _build_pdf_from_slide_screenshots(page, pdf_path: Path) -> None:
+    """Capture each visible slide as one 16:9 page — avoids CSS print page-splitting."""
+    page.add_style_tag(
+        content="""
+        body.pdf-export {
+          padding: 0 !important;
+          margin: 0 !important;
+          min-height: 0 !important;
+          align-items: stretch !important;
+          background: #fff !important;
+        }
+        body.pdf-export .deck-controls,
+        body.pdf-export .progress-rail,
+        body.pdf-export .talk-track { display: none !important; }
+        body.pdf-export .deck-header {
+          position: absolute !important;
+          top: 0; left: 0; right: 0;
+          backdrop-filter: none !important;
+          background: #fff !important;
+        }
+        body.pdf-export .slide {
+          max-width: none !important;
+          width: 100% !important;
+          height: calc(100vh - 52px) !important;
+          min-height: 0 !important;
+          margin: 52px 0 0 !important;
+          border-radius: 0 !important;
+          box-shadow: none !important;
+          border: none !important;
+          overflow: hidden !important;
+          animation: none !important;
+        }
+        """
+    )
+    page.evaluate("() => document.body.classList.add('pdf-export')")
+    page.wait_for_timeout(300)
+
+    slide_indexes = page.evaluate(
+        """() => {
+          return Array.from(document.querySelectorAll('.slide'))
+            .map((s, i) => ({ i, omitted: s.classList.contains('slide-omitted') }))
+            .filter((x) => !x.omitted)
+            .map((x) => x.i);
+        }"""
+    )
+    if not slide_indexes:
+        raise RuntimeError("No slides available for PDF export")
+
+    total = len(slide_indexes)
+    screenshots = []
+    for page_i, slide_i in enumerate(slide_indexes):
+        page.evaluate(
+            """([slideIndex, pageIndex, total]) => {
+              document.querySelectorAll('.slide').forEach((s, i) => {
+                const show = i === slideIndex;
+                s.style.display = show ? 'block' : 'none';
+                if (show) {
+                  s.setAttribute('data-slide-num', (pageIndex + 1) + ' of ' + total);
+                }
+              });
+            }""",
+            [slide_i, page_i, total],
+        )
+        page.wait_for_timeout(80)
+        screenshots.append(page.screenshot(type="png", full_page=False))
+
+    img_tags = []
+    for png in screenshots:
+        b64 = base64.b64encode(png).decode("ascii")
+        img_tags.append(
+            f'<div class="pdf-page"><img src="data:image/png;base64,{b64}" alt=""></div>'
+        )
+    compose_html = f"""<!DOCTYPE html>
+<html><head><meta charset="utf-8"><style>
+  @page {{ size: 11in 6.1875in; margin: 0; }}
+  html, body {{ margin: 0; padding: 0; background: #fff; }}
+  .pdf-page {{
+    width: 11in; height: 6.1875in;
+    page-break-after: always; break-after: page;
+    overflow: hidden;
+  }}
+  .pdf-page:last-child {{ page-break-after: auto; break-after: auto; }}
+  .pdf-page img {{
+    width: 100%; height: 100%;
+    object-fit: fill; display: block;
+  }}
+</style></head><body>{"".join(img_tags)}</body></html>"""
+    page.set_content(compose_html, wait_until="load")
+    page.pdf(
+        path=str(pdf_path),
+        width="11in",
+        height="6.1875in",
+        print_background=True,
+        margin={"top": "0", "right": "0", "bottom": "0", "left": "0"},
+    )
+
+
 @app.route("/pdf/<pid>")
 def pdf(pid):
-    """Generate PDF via Playwright using the portable HTML file (data-URI logos)."""
+    """Generate PDF via Playwright: one screenshot per slide → one page each."""
     meta = _get_presentation(pid)
     if not meta:
         return jsonify({"error": "Presentation not found"}), 404
@@ -646,18 +744,15 @@ def pdf(pid):
             browser = p.chromium.launch(
                 args=["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"]
             )
-            page = browser.new_page()
+            # 16:9 capture frame — one viewport = one slide page
+            page = browser.new_page(
+                viewport={"width": 1280, "height": 720},
+                device_scale_factor=2,
+            )
             # file:// is safe here: logos are inlined as data URIs (avoids gunicorn 1-worker deadlock)
             page.goto(f"file://{print_path.absolute()}", wait_until="load")
-            page.wait_for_timeout(1500)
-            # Match @page size in template (16:9 deck), not A4
-            page.pdf(
-                path=str(pdf_path),
-                width="11in",
-                height="6.1875in",
-                print_background=True,
-                margin={"top": "0", "right": "0", "bottom": "0", "left": "0"},
-            )
+            page.wait_for_timeout(1200)
+            _build_pdf_from_slide_screenshots(page, pdf_path)
             browser.close()
         customer = meta.get("customer", "NeuralSearch")
         safe_name = "".join(c if c.isalnum() or c in " -_" else "_" for c in customer)
